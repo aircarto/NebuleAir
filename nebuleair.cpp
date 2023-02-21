@@ -4439,7 +4439,7 @@ void setup()
 	configlorawan[5] = cfg::has_led_connect;
 	configlorawan[6] = cfg::rgpd;
 	configlorawan[7] = cfg::has_wifi;
-	; //si connection manquée => false
+	//si connection manquée => false
 
 	Debug.print("Configuration:");
 	Debug.println(booltobyte(configlorawan));
@@ -4506,8 +4506,6 @@ void loop()
 	}
 
 	//AJOUTER BMX SAUF SI ON GARDE LE MODELE SC
-
-	//COLORER les led ici avec les last_values.... OU BIEN DANS LE SENDNOW?
 
 	if (cfg::has_wifi && WiFi.waitForConnectResult() == WL_CONNECTED)
 	{

@@ -662,6 +662,20 @@ struct RGB interpolateTemp(float valueSensor, int step1, int step2, bool correct
 	return result;
 }
 
+
+static void drawpicture( uint8_t img[][3])
+{
+	for (unsigned int i = 0; i < LEDS_NB; ++i)
+	{
+		leds[i].r = img[i][0];
+		leds[i].g = img[i][1];
+		leds[i].b = img[i][2];
+	}
+}
+
+
+
+
 /*****************************************************************
  * GPS coordinates                                              *
  *****************************************************************/
@@ -4325,24 +4339,22 @@ void setup()
 		debug_outln_info(F("init FastLED"));
 		FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, LEDS_NB); //swap R and G !  //ATTENTION AU TYPE DE LED
 		FastLED.setBrightness(cfg::brightness);				   //max=255
-		displayColor_value = {0, 0, 0};
-		colorLED_value = CRGB(displayColor_value.R, displayColor_value.G, displayColor_value.B);
-		fill_solid(leds, LEDS_NB, colorLED_value);
+		drawpicture(connect16_0);
 		FastLED.show();
 		delay(500);
-		displayColor_value = {255, 255, 255};
-		colorLED_value = CRGB(displayColor_value.R, displayColor_value.G, displayColor_value.B);
-		fill_solid(leds, LEDS_NB, colorLED_value);
+		drawpicture(connect16_1);
 		FastLED.show();
 		delay(500);
-		displayColor_value = {0, 0, 0};
-		colorLED_value = CRGB(displayColor_value.R, displayColor_value.G, displayColor_value.B);
-		fill_solid(leds, LEDS_NB, colorLED_value);
+		drawpicture(connect16_0);
 		FastLED.show();
 		delay(500);
-		displayColor_value = {255, 255, 255};
-		colorLED_value = CRGB(displayColor_value.R, displayColor_value.G, displayColor_value.B);
-		fill_solid(leds, LEDS_NB, colorLED_value);
+		drawpicture(connect16_1);
+		FastLED.show();
+		delay(500);
+		drawpicture(connect16_0);
+		FastLED.show();
+		delay(500);
+		drawpicture(connect16_1);
 		FastLED.show();
 	}
 
@@ -4692,7 +4704,7 @@ void loop()
 			}
 
 			colorLED_value = CRGB(displayColor_value.R, displayColor_value.G, displayColor_value.B);
-			FastLED.setBrightness(cfg::brightness);
+			// FastLED.setBrightness(cfg::brightness);
 			fill_solid(leds, LEDS_NB - 1, colorLED_value);
 			FastLED.show();
 		}
@@ -4712,8 +4724,8 @@ void loop()
 				colorLED_connect = CRGB(255, 255, 0);
 			} //wifi prioritaire
 
-			FastLED.setBrightness(cfg::brightness);
-			fill_solid(&(leds[15]), 1 /*number of leds*/, colorLED_connect);
+			// FastLED.setBrightness(cfg::brightness);
+			// fill_solid(&(leds[15]), 1 /*number of leds*/, colorLED_connect);
 			leds[15] = colorLED_connect;
 			FastLED.show();
 		}

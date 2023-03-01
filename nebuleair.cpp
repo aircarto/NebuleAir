@@ -662,8 +662,7 @@ struct RGB interpolateTemp(float valueSensor, int step1, int step2, bool correct
 	return result;
 }
 
-
-static void drawpicture( uint8_t img[][3])
+static void drawpicture(uint8_t img[][3])
 {
 	for (unsigned int i = 0; i < LEDS_NB; ++i)
 	{
@@ -673,8 +672,53 @@ static void drawpicture( uint8_t img[][3])
 	}
 }
 
+static void drawtime1()
+{
+	for (unsigned int i = 0; i < (LEDS_NB / 2) - 1; ++i)
+	{
+		if (i < LEDS_NB / 4)
+		{
+			leds[i].r = 255;
+			leds[i].g = 0;
+			leds[i].b = 0;
+		}
 
+		if (i > (LEDS_NB / 4) - 1)
+		{
+			leds[i].r = 255;
+			leds[i].g = 165;
+			leds[i].b = 0;
+		}
 
+		FastLED.show();
+		delay(160);
+	}
+}
+
+static void drawtime2()
+{
+	for (unsigned int i = LEDS_NB / 2; i < LEDS_NB; ++i)
+	{
+		if (i < (LEDS_NB / 4) * 3)
+		{
+			leds[i].r = 255;
+			leds[i].g = 255;
+			leds[i].b = 0;
+		}
+
+		if (i > ((LEDS_NB / 4) * 3) - 1)
+		{
+			leds[i].r = 0;
+			leds[i].g = 255;
+			leds[i].b = 0;
+		}
+
+		FastLED.show();
+		delay(160);
+	}
+}
+
+//AJOUTER TEST SI PAS LED
 
 /*****************************************************************
  * GPS coordinates                                              *
@@ -930,11 +974,6 @@ static int8_t NPM_get_state()
 	{
 		debug_outln("Wait for Serial...", DEBUG_MAX_INFO);
 	} while (!serialNPM.available() && millis() - timeout < 3000);
-
-	while (!serialNPM.available())
-	{
-		debug_outln("Wait for Serial...", DEBUG_MAX_INFO);
-	}
 
 	while (serialNPM.available() >= NPM_waiting_for_4)
 	{
@@ -3656,7 +3695,18 @@ static void powerOnTestSensors()
 	if (cfg::npm_read)
 	{
 		int8_t test_state;
-		delay(15000); // wait a bit to be sure Next PM is ready to receive instructions.
+
+		//AJOUTER TEST SI PAS LED
+
+		if (cfg::has_led_value || cfg::has_led_connect)
+		{
+			drawtime1();
+		}
+		else
+		{
+			delay(15000); // wait a bit to be sure Next PM is ready to receive instructions.
+		}
+
 		test_state = NPM_get_state();
 		if (test_state == -1)
 		{
@@ -3733,21 +3783,22 @@ static void powerOnTestSensors()
 
 		if (nextpmconnected)
 		{
-			delay(15000);
+
+			//AJOUTER TEST SI PAS LED
+
+			if (cfg::has_led_value || cfg::has_led_connect)
+			{
+				drawtime2();
+			}
+			else
+			{
+				delay(15000); // wait a bit to be sure Next PM is ready to receive instructions.
+			}
+
 			NPM_version_date();
 			delay(3000);
 			NPM_temp_humi();
 			delay(2000);
-
-			// if (!cfg::npm_fulltime)
-			// {
-			// 	is_NPM_running = NPM_start_stop();
-			// 	delay(2000); //prevent any buffer overload on ESP82666
-			// }
-			// else
-			// {
-			// 	is_NPM_running = true;
-			// }
 		}
 	}
 
@@ -4339,22 +4390,42 @@ void setup()
 		debug_outln_info(F("init FastLED"));
 		FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, LEDS_NB); //swap R and G !  //ATTENTION AU TYPE DE LED
 		FastLED.setBrightness(cfg::brightness);				   //max=255
-		drawpicture(connect16_0);
+		drawpicture(connect0);
 		FastLED.show();
 		delay(500);
-		drawpicture(connect16_1);
+		drawpicture(connect1);
 		FastLED.show();
 		delay(500);
-		drawpicture(connect16_0);
+		drawpicture(connect2);
 		FastLED.show();
 		delay(500);
-		drawpicture(connect16_1);
+		drawpicture(connect3);
 		FastLED.show();
 		delay(500);
-		drawpicture(connect16_0);
+		drawpicture(connect4);
 		FastLED.show();
 		delay(500);
-		drawpicture(connect16_1);
+		drawpicture(connect0);
+		FastLED.show();
+		delay(500);
+		drawpicture(connect1);
+		FastLED.show();
+		delay(500);
+		drawpicture(connect2);
+		FastLED.show();
+		delay(500);
+		drawpicture(connect3);
+		FastLED.show();
+		delay(500);
+		drawpicture(connect4);
+		FastLED.show();
+		delay(500);
+		drawpicture(connect0);
+		FastLED.show();
+		//5 secondes
+		displayColor_value = {0, 0, 0};
+		colorLED_value = CRGB(displayColor_value.R, displayColor_value.G, displayColor_value.B);
+		fill_solid(leds, LEDS_NB, colorLED_value);
 		FastLED.show();
 	}
 

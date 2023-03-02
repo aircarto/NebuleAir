@@ -2,8 +2,8 @@
 #define CURRENT_LANG INTL_LANG
 
 // Wifi config
-const char WLANSSID[] PROGMEM = "EasyBox-550263";
-const char WLANPWD[] PROGMEM = "KmxrZeUtmgMKdEGa";
+const char WLANSSID[] PROGMEM = "XXXXXXXXXXX";
+const char WLANPWD[] PROGMEM = "XXXXXXXXXXX";
 
 
 #define TIME_FOR_WIFI_CONFIG 120000;
@@ -66,7 +66,7 @@ static const char NTP_SERVER_1[] PROGMEM = "ntp-p1.obspm.fr";
 static const char NTP_SERVER_2[] PROGMEM = "ntp.obspm.fr";
 
 // define own API
-static const char HOST_CUSTOM[] PROGMEM = "data.nebulair.fr";
+static const char HOST_CUSTOM[] PROGMEM = "data.nebuleair.fr";
 static const char URL_CUSTOM[] PROGMEM = "/wifi.php";
 #define PORT_CUSTOM 80
 #define USER_CUSTOM ""

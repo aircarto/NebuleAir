@@ -1,6 +1,6 @@
 # NebuleAir
 
-![nebulo_logo](https://aircarto.fr/images/LogoNebuleAir.png)
+![nebulo_logo](https://aircarto.fr/images/nebuleair/LogoNebuleAir.png)
 
 New version of the air quality sensor NebuleAir developped with [AtmoSud](https://www.atmosud.org/).
 

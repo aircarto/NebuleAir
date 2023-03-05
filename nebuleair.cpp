@@ -2205,11 +2205,15 @@ static void webserver_config()
 	if (WiFi.getMode() == WIFI_MODE_STA)
 	{
 		debug_outln_info(F("STA"));
+		drawpicture(check);
+		FastLED.show();
 	}
 
 	if (WiFi.getMode() == WIFI_MODE_AP)
 	{
 		debug_outln_info(F("AP"));
+		drawpicture(wifi);
+		FastLED.show();
 	}
 
 	if (!webserver_request_auth())
@@ -4392,34 +4396,64 @@ void setup()
 		FastLED.setBrightness(cfg::brightness);				   //max=255
 		drawpicture(connect0);
 		FastLED.show();
-		delay(500);
+		delay(250);
 		drawpicture(connect1);
 		FastLED.show();
-		delay(500);
+		delay(250);
 		drawpicture(connect2);
 		FastLED.show();
-		delay(500);
+		delay(250);
 		drawpicture(connect3);
 		FastLED.show();
-		delay(500);
+		delay(250);
 		drawpicture(connect4);
 		FastLED.show();
-		delay(500);
+		delay(250);
 		drawpicture(connect0);
 		FastLED.show();
-		delay(500);
+		delay(250);
 		drawpicture(connect1);
 		FastLED.show();
-		delay(500);
+		delay(250);
 		drawpicture(connect2);
 		FastLED.show();
-		delay(500);
+		delay(250);
 		drawpicture(connect3);
 		FastLED.show();
-		delay(500);
+		delay(250);
 		drawpicture(connect4);
 		FastLED.show();
-		delay(500);
+		delay(250);
+		drawpicture(connect0);
+		FastLED.show();
+		delay(250);
+		drawpicture(connect1);
+		FastLED.show();
+		delay(250);
+		drawpicture(connect2);
+		FastLED.show();
+		delay(250);
+		drawpicture(connect3);
+		FastLED.show();
+		delay(250);
+		drawpicture(connect4);
+		FastLED.show();
+		delay(250);
+		drawpicture(connect0);
+		FastLED.show();
+		delay(250);
+		drawpicture(connect1);
+		FastLED.show();
+		delay(250);
+		drawpicture(connect2);
+		FastLED.show();
+		delay(250);
+		drawpicture(connect3);
+		FastLED.show();
+		delay(250);
+		drawpicture(connect4);
+		FastLED.show();
+		delay(250);
 		drawpicture(connect0);
 		FastLED.show();
 		//5 secondes
@@ -4797,7 +4831,7 @@ void loop()
 
 			// FastLED.setBrightness(cfg::brightness);
 			// fill_solid(&(leds[15]), 1 /*number of leds*/, colorLED_connect);
-			leds[15] = colorLED_connect;
+			leds[LEDS_NB - 1] = colorLED_connect;
 			FastLED.show();
 		}
 
@@ -4878,8 +4912,24 @@ void loop()
 			do_send(&sendjob);
 
 			//os_run_loop_once here ?
-			//boolean in EV_TX_COMPLETE to allaw WiFi after?
 		}
+
+		if ((!cfg::has_wifi && !cfg::has_lora) || (cfg::has_wifi && wifi_connection_lost && !cfg::has_lora) || (cfg::has_lora && lora_connection_lost && !cfg::has_wifi))
+		{
+			// no transmission
+
+		}
+
+		if (cfg::has_wifi && !wifi_connection_lost)
+		{
+
+			// wifi
+		}
+
+		if (cfg::has_lora && (!cfg::has_wifi || (cfg::has_wifi && wifi_connection_lost)) && !lora_connection_lost)
+		{
+			// lora
+		} 
 
 		starttime = millis(); // store the start time
 		count_sends++;

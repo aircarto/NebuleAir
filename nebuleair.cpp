@@ -4914,22 +4914,179 @@ void loop()
 			//os_run_loop_once here ?
 		}
 
-		if ((!cfg::has_wifi && !cfg::has_lora) || (cfg::has_wifi && wifi_connection_lost && !cfg::has_lora) || (cfg::has_lora && lora_connection_lost && !cfg::has_wifi))
+		if (cfg::has_led_value || cfg::has_led_connect)
 		{
-			// no transmission
+			if ((cfg::has_wifi && wifi_connection_lost && !cfg::has_lora) || (cfg::has_lora && lora_connection_lost && !cfg::has_wifi))
+			{
+				drawpicture(empty);
+				FastLED.show();
+				delay(250);
+				drawpicture(notransmission);
+				FastLED.show();
+				delay(250);
+				drawpicture(empty);
+				FastLED.show();
+				delay(250);
+				drawpicture(notransmission);
+				FastLED.show();
+				delay(250);
+				drawpicture(empty);
+				FastLED.show();
+				delay(250);
+				drawpicture(notransmission);
+				FastLED.show();
+				delay(250);
+				drawpicture(empty);
+				FastLED.show();
+				delay(250);
+				drawpicture(notransmission);
+				FastLED.show();
+				delay(250);
+				drawpicture(empty);
+				FastLED.show();
+				delay(250);
+				drawpicture(notransmission);
+				FastLED.show();
+				delay(250);
+				drawpicture(empty);
+				FastLED.show();
+				delay(250);
+				drawpicture(notransmission);
+				FastLED.show();
+				delay(250);
+				drawpicture(empty);
 
+				if (cfg::has_led_value)
+				{
+					fill_solid(leds, LEDS_NB - 1, colorLED_value);
+					FastLED.show();
+				}
+
+				if (cfg::has_led_connect)
+				{
+					leds[LEDS_NB - 1] = colorLED_connect;
+					FastLED.show();
+				}
+			}
+
+			if (cfg::has_wifi && !wifi_connection_lost)
+			{
+				drawpicture(transmitblue1);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmitblue2);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmitblue3);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmitblue4);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmitblue5);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmitblue6);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmitblue7);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmitblue8);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmitblue9);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmitblue10);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmitblue11);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmitblue12);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmitblue13);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmitblue14);
+				FastLED.show();
+				delay(250);
+				drawpicture(empty);
+
+				if (cfg::has_led_value)
+				{
+					fill_solid(leds, LEDS_NB - 1, colorLED_value);
+					FastLED.show();
+				}
+
+				if (cfg::has_led_connect)
+				{
+					leds[LEDS_NB - 1] = colorLED_connect;
+					FastLED.show();
+				}
+			}
+
+			if (cfg::has_lora && (!cfg::has_wifi || (cfg::has_wifi && wifi_connection_lost)) && !lora_connection_lost)
+			{
+				drawpicture(transmityellow1);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmityellow2);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmityellow3);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmityellow4);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmityellow5);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmityellow6);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmityellow7);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmityellow8);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmityellow9);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmityellow10);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmityellow11);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmityellow12);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmityellow13);
+				FastLED.show();
+				delay(250);
+				drawpicture(transmityellow14);
+				FastLED.show();
+				delay(250);
+				drawpicture(empty);
+
+				if (cfg::has_led_value)
+				{
+					fill_solid(leds, LEDS_NB - 1, colorLED_value);
+					FastLED.show();
+				}
+
+				if (cfg::has_led_connect)
+				{
+					leds[LEDS_NB - 1] = colorLED_connect;
+					FastLED.show();
+				}
+			}
 		}
-
-		if (cfg::has_wifi && !wifi_connection_lost)
-		{
-
-			// wifi
-		}
-
-		if (cfg::has_lora && (!cfg::has_wifi || (cfg::has_wifi && wifi_connection_lost)) && !lora_connection_lost)
-		{
-			// lora
-		} 
 
 		starttime = millis(); // store the start time
 		count_sends++;

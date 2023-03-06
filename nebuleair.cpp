@@ -473,7 +473,6 @@ struct RGB interpolateCOV(float valueSensor, int step1, int step2, bool correcti
 
 	if (valueSensor == 0)
 	{
-
 		result.R = 0;
 		result.G = 255; // Green entre 0 et 800
 		result.B = 0;
@@ -524,7 +523,6 @@ struct RGB interpolateHumi(float valueSensor, int step1, int step2, bool correct
 
 	if (valueSensor == 0)
 	{
-
 		result.R = 255;
 		result.G = 0; // red
 		result.B = 0;
@@ -576,7 +574,6 @@ struct RGB interpolatePress(float valueSensor, int step1, int step2, bool correc
 
 	if (valueSensor == 0)
 	{
-
 		result.R = 255;
 		result.G = 0; // red
 		result.B = 0;
@@ -632,7 +629,6 @@ struct RGB interpolateTemp(float valueSensor, int step1, int step2, bool correct
 	}
 	else if (valueSensor >= step1 && valueSensor < step2)
 	{
-
 		result.R = 0;
 		result.G = 255; // Green ok
 		result.B = 0;
@@ -674,7 +670,7 @@ static void drawpicture(uint8_t img[][3])
 
 static void drawtime1()
 {
-	for (unsigned int i = 0; i < (LEDS_NB / 2) - 1; ++i)
+	for (unsigned int i = 0; i < (LEDS_NB / 2); ++i)
 	{
 		if (i < LEDS_NB / 4)
 		{
@@ -2189,6 +2185,13 @@ static void sensor_restart()
 	{
 		serialSDS.end();
 	}
+
+	if (cfg::has_led_value || cfg::has_led_connect)
+	{
+		drawpicture(empty);
+		FastLED.show();
+	}
+
 	debug_outln_info(F("Restart."));
 	delay(500);
 	ESP.restart();
@@ -2907,6 +2910,12 @@ static int selectChannelForAp()
 
 static void wifiConfig()
 {
+
+	if (cfg::has_led_value || cfg::has_led_connect)
+	{
+		drawpicture(wifi);
+		FastLED.show();
+	}
 
 	debug_outln_info(F("Starting WiFiManager"));
 	debug_outln_info(F("AP ID: "), String(cfg::fs_ssid));

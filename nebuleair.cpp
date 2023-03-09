@@ -204,7 +204,18 @@ WebServer server(80);
 CRGB colorLED_value;
 CRGB colorLED_connect;
 
-CRGB leds[LEDS_NB]; //DOIT ESTRE UNE CONSTANTE => PAS CONFIGURABLE
+//For monoLED
+
+CRGB colorLED_empty = CRGB(0, 0, 0);
+CRGB colorLED_wifi = CRGB(0, 0, 255);
+CRGB colorLED_lora = CRGB(255, 255, 0);
+CRGB colorLED_start = CRGB(255, 255, 255);
+CRGB colorLED_red = CRGB(255, 0, 0);
+CRGB colorLED_orange = CRGB(255, 165, 0);
+CRGB colorLED_yellow = CRGB(255, 255, 0);
+CRGB colorLED_green = CRGB(0, 255, 0);
+
+CRGB leds[LEDS_NB]; //DOIT ETRE UNE CONSTANTE => PAS CONFIGURABLE
 
 struct RGB
 {
@@ -674,21 +685,39 @@ static void drawtime1()
 	{
 		if (i < LEDS_NB / 4)
 		{
-			leds[i].r = 255;
-			leds[i].g = 0;
-			leds[i].b = 0;
+			// leds[i].r = 255;
+			// leds[i].g = 0;
+			// leds[i].b = 0;
+
+			leds[i] = colorLED_red;
 		}
 
 		if (i > (LEDS_NB / 4) - 1)
 		{
-			leds[i].r = 255;
-			leds[i].g = 165;
-			leds[i].b = 0;
+			// leds[i].r = 255;
+			// leds[i].g = 165;
+			// leds[i].b = 0;
+
+			leds[i] = colorLED_orange;
 		}
 
 		FastLED.show();
 		delay(160);
 	}
+}
+
+static void drawtimemono1()
+{
+	leds[0] = colorLED_red;
+	FastLED.show();
+	delay(7500);
+	leds[0] = colorLED_orange;
+	FastLED.show();
+	delay(7500);
+}
+
+static void drawtimeline1()
+{
 }
 
 static void drawtime2()
@@ -697,21 +726,37 @@ static void drawtime2()
 	{
 		if (i < (LEDS_NB / 4) * 3)
 		{
-			leds[i].r = 255;
-			leds[i].g = 255;
-			leds[i].b = 0;
+			// leds[i].r = 255;
+			// leds[i].g = 255;
+			// leds[i].b = 0;
+			leds[i] = colorLED_yellow;
 		}
 
 		if (i > ((LEDS_NB / 4) * 3) - 1)
 		{
-			leds[i].r = 0;
-			leds[i].g = 255;
-			leds[i].b = 0;
+			// leds[i].r = 0;
+			// leds[i].g = 255;
+			// leds[i].b = 0;
+			leds[i] = colorLED_green;
 		}
 
 		FastLED.show();
 		delay(160);
 	}
+}
+
+static void drawtimemono2()
+{
+	leds[0] = colorLED_orange;
+	FastLED.show();
+	delay(7500);
+	leds[0] = colorLED_green;
+	FastLED.show();
+	delay(7500);
+}
+
+static void drawtimeline2()
+{
 }
 
 //AJOUTER TEST SI PAS LED
@@ -2188,8 +2233,22 @@ static void sensor_restart()
 
 	if (cfg::has_led_value || cfg::has_led_connect)
 	{
-		drawpicture(empty);
-		FastLED.show();
+		if (LEDS_NB == 1)
+		{
+			leds[0] = colorLED_empty;
+			FastLED.show();
+		}
+		else
+		{
+			if (LEDS_MATRIX)
+			{
+				drawpicture(empty);
+				FastLED.show();
+			}
+			else
+			{
+			}
+		}
 	}
 
 	debug_outln_info(F("Restart."));
@@ -2208,15 +2267,60 @@ static void webserver_config()
 	if (WiFi.getMode() == WIFI_MODE_STA)
 	{
 		debug_outln_info(F("STA"));
-		drawpicture(check);
-		FastLED.show();
+
+		if (LEDS_NB == 1)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				leds[0] = colorLED_empty;
+				FastLED.show();
+				delay(250);
+				leds[0] = colorLED_wifi;
+				FastLED.show();
+				delay(250);
+			}
+			leds[0] = colorLED_empty;
+			FastLED.show();
+		}
+		else
+		{
+			if (LEDS_MATRIX)
+			{
+				drawpicture(empty);
+				FastLED.show();
+				drawpicture(check);
+				FastLED.show();
+			}
+			else
+			{
+			}
+		}
 	}
 
 	if (WiFi.getMode() == WIFI_MODE_AP)
 	{
 		debug_outln_info(F("AP"));
-		drawpicture(wifi);
-		FastLED.show();
+
+		if (LEDS_NB == 1)
+		{
+			leds[0] = colorLED_empty;
+			FastLED.show();
+			leds[0] = colorLED_wifi;
+			FastLED.show();
+		}
+		else
+		{
+			if (LEDS_MATRIX)
+			{
+				drawpicture(empty);
+				FastLED.show();
+				drawpicture(wifi);
+				FastLED.show();
+			}
+			else
+			{
+			}
+		}
 	}
 
 	if (!webserver_request_auth())
@@ -2913,8 +3017,24 @@ static void wifiConfig()
 
 	if (cfg::has_led_value || cfg::has_led_connect)
 	{
-		drawpicture(wifi);
-		FastLED.show();
+		if (LEDS_NB == 1)
+		{
+			leds[0] = colorLED_empty;
+			FastLED.show();
+			leds[0] = colorLED_wifi;
+			FastLED.show();
+		}
+		else
+		{
+			if (LEDS_MATRIX)
+			{
+				drawpicture(wifi);
+				FastLED.show();
+			}
+			else
+			{
+			}
+		}
 	}
 
 	debug_outln_info(F("Starting WiFiManager"));
@@ -2979,6 +3099,28 @@ static void wifiConfig()
 		server.handleClient();
 		yield();
 	}
+
+	if (cfg::has_led_value || cfg::has_led_connect)
+	{
+		if (LEDS_NB == 1)
+		{
+			leds[0] = colorLED_empty;
+			FastLED.show();
+		}
+		else
+		{
+			if (LEDS_MATRIX)
+			{
+				drawpicture(empty);
+				FastLED.show();
+			}
+			else
+			{
+			}
+		}
+	}
+
+	//On coupe si depassemnt du temps
 
 	WiFi.softAPdisconnect(true);
 	WiFi.disconnect(true);
@@ -3713,7 +3855,20 @@ static void powerOnTestSensors()
 
 		if (cfg::has_led_value || cfg::has_led_connect)
 		{
-			drawtime1();
+			if (LEDS_NB == 1)
+			{
+				drawtimemono1();
+			}
+			else
+			{
+				if (LEDS_MATRIX)
+				{
+					drawtime1();
+				}
+				else
+				{
+				}
+			}
 		}
 		else
 		{
@@ -3801,7 +3956,20 @@ static void powerOnTestSensors()
 
 			if (cfg::has_led_value || cfg::has_led_connect)
 			{
-				drawtime2();
+				if (LEDS_NB == 1)
+				{
+					drawtimemono2();
+				}
+				else
+				{
+					if (LEDS_MATRIX)
+					{
+						drawtime2();
+					}
+					else
+					{
+					}
+				}
 			}
 			else
 			{
@@ -4403,73 +4571,44 @@ void setup()
 		debug_outln_info(F("init FastLED"));
 		FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, LEDS_NB); //swap R and G !  //ATTENTION AU TYPE DE LED
 		FastLED.setBrightness(cfg::brightness);				   //max=255
-		drawpicture(connect0);
-		FastLED.show();
-		delay(250);
-		drawpicture(connect1);
-		FastLED.show();
-		delay(250);
-		drawpicture(connect2);
-		FastLED.show();
-		delay(250);
-		drawpicture(connect3);
-		FastLED.show();
-		delay(250);
-		drawpicture(connect4);
-		FastLED.show();
-		delay(250);
-		drawpicture(connect0);
-		FastLED.show();
-		delay(250);
-		drawpicture(connect1);
-		FastLED.show();
-		delay(250);
-		drawpicture(connect2);
-		FastLED.show();
-		delay(250);
-		drawpicture(connect3);
-		FastLED.show();
-		delay(250);
-		drawpicture(connect4);
-		FastLED.show();
-		delay(250);
-		drawpicture(connect0);
-		FastLED.show();
-		delay(250);
-		drawpicture(connect1);
-		FastLED.show();
-		delay(250);
-		drawpicture(connect2);
-		FastLED.show();
-		delay(250);
-		drawpicture(connect3);
-		FastLED.show();
-		delay(250);
-		drawpicture(connect4);
-		FastLED.show();
-		delay(250);
-		drawpicture(connect0);
-		FastLED.show();
-		delay(250);
-		drawpicture(connect1);
-		FastLED.show();
-		delay(250);
-		drawpicture(connect2);
-		FastLED.show();
-		delay(250);
-		drawpicture(connect3);
-		FastLED.show();
-		delay(250);
-		drawpicture(connect4);
-		FastLED.show();
-		delay(250);
-		drawpicture(connect0);
-		FastLED.show();
-		//5 secondes
-		displayColor_value = {0, 0, 0};
-		colorLED_value = CRGB(displayColor_value.R, displayColor_value.G, displayColor_value.B);
-		fill_solid(leds, LEDS_NB, colorLED_value);
-		FastLED.show();
+
+		if (LEDS_NB == 1)
+		{
+
+			//colorLED_start;
+
+			//CLIGNOTER BLANC
+		}
+		else
+		{
+			if (LEDS_MATRIX)
+			{
+				for (int i = 0; i < 5; i++)
+				{
+					drawpicture(empty);
+					FastLED.show();
+					delay(200);
+					drawpicture(connect1);
+					FastLED.show();
+					delay(200);
+					drawpicture(connect2);
+					FastLED.show();
+					delay(200);
+					drawpicture(connect3);
+					FastLED.show();
+					delay(200);
+					drawpicture(connect4);
+					FastLED.show();
+					delay(200);
+				}
+				drawpicture(empty);
+				FastLED.show();
+				//5 secondes
+			}
+			else
+			{
+			}
+		}
 	}
 
 	debug_outln_info(F("\nChipId: "), esp_chipid);
@@ -4818,9 +4957,25 @@ void loop()
 			}
 
 			colorLED_value = CRGB(displayColor_value.R, displayColor_value.G, displayColor_value.B);
-			// FastLED.setBrightness(cfg::brightness);
-			fill_solid(leds, LEDS_NB - 1, colorLED_value);
-			FastLED.show();
+
+			if (LEDS_NB == 1)
+			{
+				leds[0] = colorLED_value;
+				FastLED.show();
+			}
+			else
+			{
+				if (LEDS_MATRIX)
+				{
+					fill_solid(leds, LEDS_NB - 1, colorLED_value);
+					FastLED.show();
+				}
+				else
+				{
+					fill_solid(leds, LEDS_NB - 1, colorLED_value);
+					FastLED.show();
+				}
+			}
 		}
 
 		if (cfg::has_led_connect)
@@ -4838,10 +4993,23 @@ void loop()
 				colorLED_connect = CRGB(255, 255, 0);
 			} //wifi prioritaire
 
-			// FastLED.setBrightness(cfg::brightness);
-			// fill_solid(&(leds[15]), 1 /*number of leds*/, colorLED_connect);
-			leds[LEDS_NB - 1] = colorLED_connect;
-			FastLED.show();
+			if (LEDS_NB == 1)
+			{
+				//On ne fait rien
+			}
+			else
+			{
+				if (LEDS_MATRIX)
+				{
+					leds[LEDS_NB - 1] = colorLED_connect;
+					FastLED.show();
+				}
+				else
+				{
+					leds[LEDS_NB - 1] = colorLED_connect;
+					FastLED.show();
+				}
+			}
 		}
 
 		yield();
@@ -4927,172 +5095,264 @@ void loop()
 		{
 			if ((cfg::has_wifi && wifi_connection_lost && !cfg::has_lora) || (cfg::has_lora && lora_connection_lost && !cfg::has_wifi))
 			{
-				drawpicture(empty);
-				FastLED.show();
-				delay(250);
-				drawpicture(notransmission);
-				FastLED.show();
-				delay(250);
-				drawpicture(empty);
-				FastLED.show();
-				delay(250);
-				drawpicture(notransmission);
-				FastLED.show();
-				delay(250);
-				drawpicture(empty);
-				FastLED.show();
-				delay(250);
-				drawpicture(notransmission);
-				FastLED.show();
-				delay(250);
-				drawpicture(empty);
-				FastLED.show();
-				delay(250);
-				drawpicture(notransmission);
-				FastLED.show();
-				delay(250);
-				drawpicture(empty);
-				FastLED.show();
-				delay(250);
-				drawpicture(notransmission);
-				FastLED.show();
-				delay(250);
-				drawpicture(empty);
-				FastLED.show();
-				delay(250);
-				drawpicture(notransmission);
-				FastLED.show();
-				delay(250);
-				drawpicture(empty);
-
-				if (cfg::has_led_value)
+				if (LEDS_NB == 1)
 				{
-					fill_solid(leds, LEDS_NB - 1, colorLED_value);
+					for (int i = 0; i < 6; i++)
+					{
+						leds[0] = colorLED_empty;
+						FastLED.show();
+						delay(250);
+						leds[0] = colorLED_red;
+						FastLED.show();
+						delay(250);
+					}
+					drawpicture(empty);
 					FastLED.show();
 				}
-
-				if (cfg::has_led_connect)
+				else
 				{
-					leds[LEDS_NB - 1] = colorLED_connect;
-					FastLED.show();
+					if (LEDS_MATRIX)
+					{
+						for (int i = 0; i < 6; i++)
+						{
+							drawpicture(empty);
+							FastLED.show();
+							delay(250);
+							drawpicture(notransmission);
+							FastLED.show();
+							delay(250);
+						}
+						drawpicture(empty);
+						FastLED.show();
+					}
+					else
+					{
+
+					for (int i = 0; i < 6; i++)
+						{
+							fill_solid(leds, LEDS_NB - 1, colorLED_empty);
+							FastLED.show();
+							delay(250);
+							fill_solid(leds, LEDS_NB - 1, colorLED_red);
+							FastLED.show();
+							delay(250);
+						}
+						fill_solid(leds, LEDS_NB - 1, colorLED_empty);
+						FastLED.show();
+
+					}
 				}
 			}
 
 			if (cfg::has_wifi && !wifi_connection_lost)
 			{
-				drawpicture(transmitblue1);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmitblue2);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmitblue3);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmitblue4);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmitblue5);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmitblue6);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmitblue7);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmitblue8);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmitblue9);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmitblue10);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmitblue11);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmitblue12);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmitblue13);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmitblue14);
-				FastLED.show();
-				delay(250);
-				drawpicture(empty);
 
-				if (cfg::has_led_value)
+				if (LEDS_NB == 1)
 				{
-					fill_solid(leds, LEDS_NB - 1, colorLED_value);
-					FastLED.show();
+
+			for (int i = 0; i < 15; i++)
+			{
+				leds[0] = colorLED_empty;
+				FastLED.show();
+				delay(100);
+				leds[0] = colorLED_wifi;
+				FastLED.show();
+				delay(100);
+			}
+				leds[0] = colorLED_empty;
+				FastLED.show();
+
 				}
-
-				if (cfg::has_led_connect)
+				else
 				{
-					leds[LEDS_NB - 1] = colorLED_connect;
-					FastLED.show();
+					if (LEDS_MATRIX)
+					{
+						drawpicture(transmitblue1);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmitblue2);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmitblue3);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmitblue4);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmitblue5);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmitblue6);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmitblue7);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmitblue8);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmitblue9);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmitblue10);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmitblue11);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmitblue12);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmitblue13);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmitblue14);
+						FastLED.show();
+						delay(250);
+						drawpicture(empty);
+					}
+					else
+					{
+					for (unsigned int i = 0; i < LEDS_NB; ++i)
+						{
+							leds[i] = colorLED_wifi;
+							FastLED.show();
+							delay(187);
+						}
+					for (unsigned int i = 0; i < LEDS_NB; ++i)
+						{
+							leds[i] = colorLED_empty;
+							FastLED.show();
+							delay(187);
+						}
+					}
 				}
 			}
 
 			if (cfg::has_lora && (!cfg::has_wifi || (cfg::has_wifi && wifi_connection_lost)) && !lora_connection_lost)
 			{
-				drawpicture(transmityellow1);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmityellow2);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmityellow3);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmityellow4);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmityellow5);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmityellow6);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmityellow7);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmityellow8);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmityellow9);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmityellow10);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmityellow11);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmityellow12);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmityellow13);
-				FastLED.show();
-				delay(250);
-				drawpicture(transmityellow14);
-				FastLED.show();
-				delay(250);
-				drawpicture(empty);
 
-				if (cfg::has_led_value)
+				if (LEDS_NB == 1)
 				{
-					fill_solid(leds, LEDS_NB - 1, colorLED_value);
+				for (int i = 0; i < 15; i++)
+			{
+				leds[0] = colorLED_empty;
+				FastLED.show();
+				delay(100);
+				leds[0] = colorLED_lora;
+				FastLED.show();
+				delay(100);
+			}
+				leds[0] = colorLED_empty;
+				FastLED.show();
+
+				}
+				else
+				{
+					if (LEDS_MATRIX)
+					{
+						drawpicture(transmityellow1);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmityellow2);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmityellow3);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmityellow4);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmityellow5);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmityellow6);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmityellow7);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmityellow8);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmityellow9);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmityellow10);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmityellow11);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmityellow12);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmityellow13);
+						FastLED.show();
+						delay(250);
+						drawpicture(transmityellow14);
+						FastLED.show();
+						delay(250);
+						drawpicture(empty);
+					}
+					else
+					{
+					for (unsigned int i = 0; i < LEDS_NB; ++i)
+						{
+							leds[i] = colorLED_lora;
+							FastLED.show();
+							delay(187);
+						}
+					for (unsigned int i = 0; i < LEDS_NB; ++i)
+						{
+							leds[i] = colorLED_empty;
+							FastLED.show();
+							delay(187);
+						}
+					}
+				}
+			}
+
+			if (cfg::has_led_value)
+			{
+				if (LEDS_NB == 1)
+				{
+					leds[0] = colorLED_value;
 					FastLED.show();
 				}
-
-				if (cfg::has_led_connect)
+				else
 				{
-					leds[LEDS_NB - 1] = colorLED_connect;
-					FastLED.show();
+					if (LEDS_MATRIX)
+					{
+						fill_solid(leds, LEDS_NB - 1, colorLED_value);
+						FastLED.show();
+					}
+					else
+					{
+						fill_solid(leds, LEDS_NB - 1, colorLED_value);
+						FastLED.show();
+					}
+				}
+			}
+
+			if (cfg::has_led_connect)
+			{
+				if (LEDS_NB == 1)
+				{
+					//On fait rien
+				}
+				else
+				{
+					if (LEDS_MATRIX)
+					{
+						leds[LEDS_NB - 1] = colorLED_connect;
+						FastLED.show();
+					}
+					else
+					{
+						leds[LEDS_NB - 1] = colorLED_connect;
+						FastLED.show();
+					}
 				}
 			}
 		}

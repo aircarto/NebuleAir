@@ -131,11 +131,11 @@ const char LONGITUDE[] PROGMEM = "5.369";
 
 #define HAS_LED_VALUE 1
 #define HAS_LED_CONNECT 1
-#define LEDS_NB 64
-// #define LEDS_NB 1 //for monoLED
-// #define LEDS_NB 8 //for LEDline
-#define LEDS_MATRIX true 
-//#define LEDS_MATRIX false // for lEDline  
+//#define LEDS_NB 64
+//#define LEDS_NB 1 //for monoLED
+ #define LEDS_NB 8 //for LEDline
+//#define LEDS_MATRIX true 
+#define LEDS_MATRIX false // for lEDline  
 #define BRIGHTNESS 50
 #define RGPD 0
 #define GAMMA true

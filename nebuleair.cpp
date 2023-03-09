@@ -685,19 +685,11 @@ static void drawtime1()
 	{
 		if (i < LEDS_NB / 4)
 		{
-			// leds[i].r = 255;
-			// leds[i].g = 0;
-			// leds[i].b = 0;
-
 			leds[i] = colorLED_red;
 		}
 
 		if (i > (LEDS_NB / 4) - 1)
 		{
-			// leds[i].r = 255;
-			// leds[i].g = 165;
-			// leds[i].b = 0;
-
 			leds[i] = colorLED_orange;
 		}
 
@@ -718,6 +710,18 @@ static void drawtimemono1()
 
 static void drawtimeline1()
 {
+	for (unsigned int i = 0; i < LEDS_NB; ++i)
+	{
+		leds[i] = colorLED_red;
+		FastLED.show();
+		delay(470);
+	}
+		for (unsigned int i = 0; i < LEDS_NB; ++i)
+	{
+		leds[i] = colorLED_orange;
+		FastLED.show();
+		delay(470);
+	}
 }
 
 static void drawtime2()
@@ -726,17 +730,11 @@ static void drawtime2()
 	{
 		if (i < (LEDS_NB / 4) * 3)
 		{
-			// leds[i].r = 255;
-			// leds[i].g = 255;
-			// leds[i].b = 0;
 			leds[i] = colorLED_yellow;
 		}
 
 		if (i > ((LEDS_NB / 4) * 3) - 1)
 		{
-			// leds[i].r = 0;
-			// leds[i].g = 255;
-			// leds[i].b = 0;
 			leds[i] = colorLED_green;
 		}
 
@@ -757,6 +755,18 @@ static void drawtimemono2()
 
 static void drawtimeline2()
 {
+		for (unsigned int i = 0; i < LEDS_NB; ++i)
+	{
+		leds[i] = colorLED_yellow;
+		FastLED.show();
+		delay(470);
+	}
+		for (unsigned int i = 0; i < LEDS_NB; ++i)
+	{
+		leds[i] = colorLED_green;
+		FastLED.show();
+		delay(470);
+	}
 }
 
 //AJOUTER TEST SI PAS LED
@@ -2268,59 +2278,59 @@ static void webserver_config()
 	{
 		debug_outln_info(F("STA"));
 
-		if (LEDS_NB == 1)
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				leds[0] = colorLED_empty;
-				FastLED.show();
-				delay(250);
-				leds[0] = colorLED_wifi;
-				FastLED.show();
-				delay(250);
-			}
-			leds[0] = colorLED_empty;
-			FastLED.show();
-		}
-		else
-		{
-			if (LEDS_MATRIX)
-			{
-				drawpicture(empty);
-				FastLED.show();
-				drawpicture(check);
-				FastLED.show();
-			}
-			else
-			{
-			}
-		}
+		// if (LEDS_NB == 1)
+		// {
+		// 	for (int i = 0; i < 4; i++)
+		// 	{
+		// 		leds[0] = colorLED_empty;
+		// 		FastLED.show();
+		// 		delay(250);
+		// 		leds[0] = colorLED_wifi;
+		// 		FastLED.show();
+		// 		delay(250);
+		// 	}
+		// 	leds[0] = colorLED_empty;
+		// 	FastLED.show();
+		// }
+		// else
+		// {
+		// 	if (LEDS_MATRIX)
+		// 	{
+		// 		drawpicture(empty);
+		// 		FastLED.show();
+		// 		drawpicture(check);
+		// 		FastLED.show();
+		// 	}
+		// 	else
+		// 	{
+		// 	}
+		// }
 	}
 
 	if (WiFi.getMode() == WIFI_MODE_AP)
 	{
 		debug_outln_info(F("AP"));
 
-		if (LEDS_NB == 1)
-		{
-			leds[0] = colorLED_empty;
-			FastLED.show();
-			leds[0] = colorLED_wifi;
-			FastLED.show();
-		}
-		else
-		{
-			if (LEDS_MATRIX)
-			{
-				drawpicture(empty);
-				FastLED.show();
-				drawpicture(wifi);
-				FastLED.show();
-			}
-			else
-			{
-			}
-		}
+		// if (LEDS_NB == 1)
+		// {
+		// 	leds[0] = colorLED_empty;
+		// 	FastLED.show();
+		// 	leds[0] = colorLED_wifi;
+		// 	FastLED.show();
+		// }
+		// else
+		// {
+		// 	if (LEDS_MATRIX)
+		// 	{
+		// 		drawpicture(empty);
+		// 		FastLED.show();
+		// 		drawpicture(wifi);
+		// 		FastLED.show();
+		// 	}
+		// 	else
+		// 	{
+		// 	}
+		// }
 	}
 
 	if (!webserver_request_auth())
@@ -3033,6 +3043,10 @@ static void wifiConfig()
 			}
 			else
 			{
+				fill_solid(leds, LEDS_NB, colorLED_empty);
+				FastLED.show();
+				fill_solid(leds, LEDS_NB, colorLED_wifi);
+				FastLED.show();
 			}
 		}
 	}
@@ -3259,6 +3273,46 @@ static void connectWifi()
 	}
 	else
 	{
+
+		if (LEDS_NB == 1)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				leds[0] = colorLED_empty;
+				FastLED.show();
+				delay(250);
+				leds[0] = colorLED_wifi;
+				FastLED.show();
+				delay(250);
+			}
+			leds[0] = colorLED_empty;
+			FastLED.show();
+		}
+		else
+		{
+			if (LEDS_MATRIX)
+			{
+				drawpicture(empty);
+				FastLED.show();
+				drawpicture(check);
+				FastLED.show();
+			}
+			else
+			{
+				for (int i = 0; i < 4; i++)
+				{
+					fill_solid(leds, LEDS_NB, colorLED_empty);
+					FastLED.show();
+					delay(250);
+					fill_solid(leds, LEDS_NB, colorLED_wifi);
+					FastLED.show();
+					delay(250);
+				}
+				fill_solid(leds, LEDS_NB, colorLED_empty);
+				FastLED.show();
+			}
+		}
+
 		wifi_connection_lost = false;
 		Debug.println("Get coordinates..."); //only once!
 		gps coordinates_wifi = getGPS(esp_chipid);
@@ -3867,6 +3921,7 @@ static void powerOnTestSensors()
 				}
 				else
 				{
+					drawtimeline1();
 				}
 			}
 		}
@@ -3968,6 +4023,7 @@ static void powerOnTestSensors()
 					}
 					else
 					{
+					drawtimeline2();
 					}
 				}
 			}
@@ -4982,15 +5038,15 @@ void loop()
 		{
 			if ((!cfg::has_wifi && !cfg::has_lora) || (cfg::has_wifi && wifi_connection_lost && !cfg::has_lora) || (cfg::has_lora && lora_connection_lost && !cfg::has_wifi))
 			{
-				colorLED_connect = CRGB(0, 0, 0);
+				colorLED_connect = colorLED_empty;
 			}
 			if (cfg::has_wifi && !wifi_connection_lost)
 			{
-				colorLED_connect = CRGB(255, 255, 255);
+				colorLED_connect = colorLED_wifi;
 			}
 			if (cfg::has_lora && (!cfg::has_wifi || (cfg::has_wifi && wifi_connection_lost)) && !lora_connection_lost)
 			{
-				colorLED_connect = CRGB(255, 255, 0);
+				colorLED_connect = colorLED_lora;
 			} //wifi prioritaire
 
 			if (LEDS_NB == 1)
@@ -5128,7 +5184,7 @@ void loop()
 					else
 					{
 
-					for (int i = 0; i < 6; i++)
+						for (int i = 0; i < 6; i++)
 						{
 							fill_solid(leds, LEDS_NB - 1, colorLED_empty);
 							FastLED.show();
@@ -5139,7 +5195,6 @@ void loop()
 						}
 						fill_solid(leds, LEDS_NB - 1, colorLED_empty);
 						FastLED.show();
-
 					}
 				}
 			}
@@ -5150,18 +5205,17 @@ void loop()
 				if (LEDS_NB == 1)
 				{
 
-			for (int i = 0; i < 15; i++)
-			{
-				leds[0] = colorLED_empty;
-				FastLED.show();
-				delay(100);
-				leds[0] = colorLED_wifi;
-				FastLED.show();
-				delay(100);
-			}
-				leds[0] = colorLED_empty;
-				FastLED.show();
-
+					for (int i = 0; i < 15; i++)
+					{
+						leds[0] = colorLED_empty;
+						FastLED.show();
+						delay(100);
+						leds[0] = colorLED_wifi;
+						FastLED.show();
+						delay(100);
+					}
+					leds[0] = colorLED_empty;
+					FastLED.show();
 				}
 				else
 				{
@@ -5213,13 +5267,13 @@ void loop()
 					}
 					else
 					{
-					for (unsigned int i = 0; i < LEDS_NB; ++i)
+						for (unsigned int i = 0; i < LEDS_NB; ++i)
 						{
 							leds[i] = colorLED_wifi;
 							FastLED.show();
 							delay(187);
 						}
-					for (unsigned int i = 0; i < LEDS_NB; ++i)
+						for (unsigned int i = 0; i < LEDS_NB; ++i)
 						{
 							leds[i] = colorLED_empty;
 							FastLED.show();
@@ -5234,18 +5288,17 @@ void loop()
 
 				if (LEDS_NB == 1)
 				{
-				for (int i = 0; i < 15; i++)
-			{
-				leds[0] = colorLED_empty;
-				FastLED.show();
-				delay(100);
-				leds[0] = colorLED_lora;
-				FastLED.show();
-				delay(100);
-			}
-				leds[0] = colorLED_empty;
-				FastLED.show();
-
+					for (int i = 0; i < 15; i++)
+					{
+						leds[0] = colorLED_empty;
+						FastLED.show();
+						delay(100);
+						leds[0] = colorLED_lora;
+						FastLED.show();
+						delay(100);
+					}
+					leds[0] = colorLED_empty;
+					FastLED.show();
 				}
 				else
 				{
@@ -5297,13 +5350,13 @@ void loop()
 					}
 					else
 					{
-					for (unsigned int i = 0; i < LEDS_NB; ++i)
+						for (unsigned int i = 0; i < LEDS_NB; ++i)
 						{
 							leds[i] = colorLED_lora;
 							FastLED.show();
 							delay(187);
 						}
-					for (unsigned int i = 0; i < LEDS_NB; ++i)
+						for (unsigned int i = 0; i < LEDS_NB; ++i)
 						{
 							leds[i] = colorLED_empty;
 							FastLED.show();

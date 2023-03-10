@@ -716,7 +716,7 @@ static void drawtimeline1()
 		FastLED.show();
 		delay(470);
 	}
-		for (unsigned int i = 0; i < LEDS_NB; ++i)
+	for (unsigned int i = 0; i < LEDS_NB; ++i)
 	{
 		leds[i] = colorLED_orange;
 		FastLED.show();
@@ -755,13 +755,13 @@ static void drawtimemono2()
 
 static void drawtimeline2()
 {
-		for (unsigned int i = 0; i < LEDS_NB; ++i)
+	for (unsigned int i = 0; i < LEDS_NB; ++i)
 	{
 		leds[i] = colorLED_yellow;
 		FastLED.show();
 		delay(470);
 	}
-		for (unsigned int i = 0; i < LEDS_NB; ++i)
+	for (unsigned int i = 0; i < LEDS_NB; ++i)
 	{
 		leds[i] = colorLED_green;
 		FastLED.show();
@@ -769,7 +769,9 @@ static void drawtimeline2()
 	}
 }
 
-//AJOUTER TEST SI PAS LED
+unsigned int multiplier = 1;
+bool LEDwait = false;
+unsigned long starttime_waiter;
 
 /*****************************************************************
  * GPS coordinates                                              *
@@ -4023,7 +4025,7 @@ static void powerOnTestSensors()
 					}
 					else
 					{
-					drawtimeline2();
+						drawtimeline2();
 					}
 				}
 			}
@@ -4767,6 +4769,7 @@ void setup()
 	datalora[0] = booltobyte(configlorawan);
 
 	Debug.printf("End of void setup()\n");
+	starttime_waiter = millis();
 }
 
 void loop()
@@ -4778,6 +4781,82 @@ void loop()
 	act_micro = micros();
 	act_milli = millis();
 	send_now = msSince(starttime) > cfg::sending_intervall_ms;
+
+	//first run
+
+	
+
+	if (count_sends == 0 && !send_now)
+	{
+		LEDwait = msSince(starttime_waiter) > (1000 *multiplier);
+
+		// Debug.println(starttime_waiter);
+
+		if (LEDwait)
+		{
+
+			if (multiplier & 1) //impair
+			{
+
+				if (LEDS_NB == 1)
+				{
+					leds[0] = colorLED_start;
+					FastLED.show();
+				}
+				else
+				{
+					if (LEDS_MATRIX)
+					{
+					drawpicture(damier1);
+					FastLED.show();
+					}
+					else
+					{
+						leds[0] = colorLED_empty;
+						leds[1] = colorLED_start;
+						leds[2] = colorLED_empty;
+						leds[3] = colorLED_start;
+						leds[4] = colorLED_empty;
+						leds[5] = colorLED_start;
+						leds[6] = colorLED_empty;
+						leds[7] = colorLED_start;
+						FastLED.show();
+					}
+					
+				}
+			}
+			else //pair
+			{
+
+				if (LEDS_NB == 1)
+				{
+					leds[0] = colorLED_empty;
+					FastLED.show();
+				}
+				else
+				{
+					if (LEDS_MATRIX)
+					{
+					drawpicture(damier2);
+					FastLED.show();
+					}
+					else
+					{
+						leds[0] = colorLED_start;
+						leds[1] = colorLED_empty;
+						leds[2] = colorLED_start;
+						leds[3] = colorLED_empty;
+						leds[4] = colorLED_start;
+						leds[5] = colorLED_empty;
+						leds[6] = colorLED_start;
+						leds[7] = colorLED_empty;
+						FastLED.show();
+					}
+				}
+			}
+			multiplier += 1;
+		}
+	}
 
 	// Wait at least 30s for each NTP server to sync
 

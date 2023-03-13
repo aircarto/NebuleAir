@@ -4632,10 +4632,17 @@ void setup()
 
 		if (LEDS_NB == 1)
 		{
-
-			//colorLED_start;
-
-			//CLIGNOTER BLANC
+			for (int i = 0; i < 13; i++)
+				{
+					leds[0] = colorLED_empty;
+					FastLED.show();
+					delay(200);
+					leds[0] = colorLED_start;
+					FastLED.show();
+					delay(200);
+				}
+					leds[0] = colorLED_empty;
+					FastLED.show();
 		}
 		else
 		{
@@ -4665,6 +4672,22 @@ void setup()
 			}
 			else
 			{
+					
+			for (unsigned int i = 0; i < 3; ++i)
+			{
+					for (unsigned int i = 0; i < LEDS_NB; ++i)
+						{
+							leds[i] = colorLED_start;
+							FastLED.show();
+							delay(200);
+						}
+						for (unsigned int i = 0; i < LEDS_NB; ++i)
+						{
+							leds[i] = colorLED_empty;
+						}
+						FastLED.show();
+			}
+
 			}
 		}
 	}

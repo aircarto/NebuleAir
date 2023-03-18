@@ -57,6 +57,7 @@ struct LoggerConfig {
 static const char HOST_MADAVI[] PROGMEM = "api-rrd.madavi.de";
 static const char URL_MADAVI[] PROGMEM = "/data.php";
 #define PORT_MADAVI 80
+#define PORT_DUSTI 80
 
 static const char HOST_SENSORCOMMUNITY[] PROGMEM = "api.sensor.community";
 static const char URL_SENSORCOMMUNITY[] PROGMEM = "/v1/push-sensor-data/";
@@ -124,10 +125,6 @@ static const char URL_CUSTOM2[] PROGMEM = "/data.php";
 #define CCS811_READ 0
 // #define CCS811_API_PIN X
 
-//Location
-
-const char LATITUDE[] PROGMEM = "43.296";
-const char LONGITUDE[] PROGMEM = "5.369";
 
 #define HAS_LED_VALUE 1
 #define HAS_LED_CONNECT 1

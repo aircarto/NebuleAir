@@ -14,6 +14,8 @@ String SOFTWARE_VERSION_SHORT(SOFTWARE_VERSION_STR_SHORT);
 #include "ccs811.h"
 #include <FastLED.h>
 
+#include "ca-root.h"
+
 // includes ESP32 libraries
 #define FORMAT_SPIFFS_IF_FAILED true
 #include <FS.h>
@@ -23,9 +25,20 @@ String SOFTWARE_VERSION_SHORT(SOFTWARE_VERSION_STR_SHORT);
 #include <WiFiClient.h>
 #include <WiFiClientSecure.h>
 #include <HardwareSerial.h>
-#include <esp32/sha.h> //pour https ? remplacer par #include <esp32/sha.h> ?  #include "sha/sha_parallel_engine.h" ?
+
+#if ESP_IDF_VERSION_MAJOR >= 4
+#if (ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(1, 0, 6))
+#include "sha/sha_parallel_engine.h"
+#else
+#include <esp32/sha.h>
+#endif
+#else
+//#include <hwcrypto/sha.h>
+#endif
+
 #include <WebServer.h>
 #include <ESPmDNS.h>
+#include <MD5Builder.h>
 
 #define ARDUINOJSON_ENABLE_ARDUINO_STREAM 0
 #define ARDUINOJSON_ENABLE_ARDUINO_PRINT 0
@@ -84,9 +97,6 @@ namespace cfg
 
 	// Location
 
-	char latitude[LEN_GEOCOORDINATES];
-	char longitude[LEN_GEOCOORDINATES];
-
 	char height_above_sealevel[8] = "0";
 
 	// send to "APIs"
@@ -138,8 +148,6 @@ namespace cfg
 		strcpy_P(url_custom, URL_CUSTOM);
 		strcpy_P(host_custom2, HOST_CUSTOM2);
 		strcpy_P(url_custom2, URL_CUSTOM2);
-		strcpy_P(latitude, LATITUDE);
-		strcpy_P(longitude, LONGITUDE);
 
 		if (!*fs_ssid)
 		{
@@ -772,18 +780,6 @@ static void drawtimeline2()
 unsigned int multiplier = 1;
 bool LEDwait = false;
 unsigned long starttime_waiter;
-
-/*****************************************************************
- * GPS coordinates                                              *
- *****************************************************************/
-
-struct gps
-{
-	String latitude;
-	String longitude;
-};
-
-uint8_t arrayDownlink[9]; //2x4 + 1
 
 /*****************************************************************
  * Serial declarations                                           *
@@ -1499,34 +1495,30 @@ static void init_config()
  *****************************************************************/
 static void createLoggerConfigs()
 {
+	// auto new_session = []()
+	// { return nullptr; };
 
-	auto new_session = []()
-	{ return nullptr; };
-
-	if (cfg::send2dusti)
+	loggerConfigs[LoggerSensorCommunity].destport = PORT_DUSTI;
+	if (cfg::send2dusti && cfg::ssl_dusti)
 	{
-		loggerConfigs[LoggerSensorCommunity].destport = 80;
-		if (cfg::ssl_dusti)
-		{
-			loggerConfigs[LoggerSensorCommunity].destport = 443;
-			loggerConfigs[LoggerSensorCommunity].session = new_session();
-		}
+		loggerConfigs[LoggerSensorCommunity].destport = 443;
 	}
+
 	loggerConfigs[LoggerMadavi].destport = PORT_MADAVI;
 	if (cfg::send2madavi && cfg::ssl_madavi)
 	{
 		loggerConfigs[LoggerMadavi].destport = 443;
-		loggerConfigs[LoggerMadavi].session = new_session();
 	}
+
 	loggerConfigs[LoggerCustom].destport = cfg::port_custom;
-	if (cfg::send2custom && (cfg::ssl_custom || (cfg::port_custom == 443)))
+	if (cfg::send2custom && cfg::ssl_custom)
 	{
-		loggerConfigs[LoggerCustom].session = new_session();
+		loggerConfigs[LoggerCustom].destport = 443;
 	}
 	loggerConfigs[LoggerCustom2].destport = cfg::port_custom2;
-	if (cfg::send2custom2 && (cfg::ssl_custom2 || (cfg::port_custom2 == 443)))
+	if (cfg::send2custom2 && cfg::ssl_custom2)
 	{
-		loggerConfigs[LoggerCustom2].session = new_session();
+		loggerConfigs[LoggerCustom2].destport = 443;
 	}
 }
 
@@ -2046,8 +2038,6 @@ static void webserver_config_send_body_get(String &page_content)
 
 	page_content += F("<b>" INTL_LOCATION "</b>&nbsp;");
 	page_content += FPSTR(TABLE_TAG_OPEN);
-	add_form_input(page_content, Config_latitude, FPSTR(INTL_LATITUDE), LEN_GEOCOORDINATES - 1);
-	add_form_input(page_content, Config_longitude, FPSTR(INTL_LONGITUDE), LEN_GEOCOORDINATES - 1);
 	add_form_input(page_content, Config_height_above_sealevel, FPSTR(INTL_HEIGHT_ABOVE_SEALEVEL), LEN_HEIGHT_ABOVE_SEALEVEL - 1);
 	page_content += FPSTR(TABLE_TAG_CLOSE_BR);
 
@@ -2116,26 +2106,29 @@ static void webserver_config_send_body_get(String &page_content)
 	add_radio_input(page_content, Config_value_displayed, FPSTR(INTL_VALUE_DISPLAYED));
 
 	server.sendContent(page_content);
-	//page_content = emptyString;
 
 	page_content = tmpl(FPSTR(WEB_DIV_PANEL), String(6));
 
+	page_content += FPSTR("<b>");
 	page_content += tmpl(FPSTR(INTL_SEND_TO), F(""));
-	page_content += FPSTR(BR_TAG);
+	page_content += FPSTR(WEB_B_BR);
 	page_content += form_checkbox(Config_send2dusti, FPSTR(WEB_SENSORCOMMUNITY), false);
-
-	page_content += FPSTR("<br>");
+	page_content += FPSTR(WEB_NBSP_NBSP_BRACE);
+	page_content += form_checkbox(Config_ssl_dusti, FPSTR(WEB_HTTPS), false);
+	page_content += FPSTR(WEB_BRACE_BR);
 	page_content += form_checkbox(Config_send2madavi, FPSTR(WEB_MADAVI), false);
-	page_content += FPSTR("<br>");
-
+	page_content += FPSTR(WEB_NBSP_NBSP_BRACE);
+	page_content += form_checkbox(Config_ssl_madavi, FPSTR(WEB_HTTPS), false);
+	page_content += FPSTR(WEB_BRACE_BR);
 	add_form_checkbox(Config_send2csv, FPSTR(WEB_CSV));
-
 	server.sendContent(page_content);
 	page_content = emptyString;
 
 	page_content += FPSTR(BR_TAG);
 	page_content += form_checkbox(Config_send2custom, FPSTR(INTL_SEND_TO_OWN_API), false);
-
+	page_content += FPSTR(WEB_NBSP_NBSP_BRACE);
+	page_content += form_checkbox(Config_ssl_custom, FPSTR(WEB_HTTPS), false);
+	page_content += FPSTR(WEB_BRACE_BR);
 	server.sendContent(page_content);
 	page_content = FPSTR(TABLE_TAG_OPEN);
 	add_form_input(page_content, Config_host_custom, FPSTR(INTL_SERVER), LEN_HOST_CUSTOM - 1);
@@ -2144,26 +2137,28 @@ static void webserver_config_send_body_get(String &page_content)
 	add_form_input(page_content, Config_user_custom, FPSTR(INTL_USER), LEN_USER_CUSTOM - 1);
 	add_form_input(page_content, Config_pwd_custom, FPSTR(INTL_PASSWORD), LEN_CFG_PASSWORD - 1);
 	page_content += FPSTR(TABLE_TAG_CLOSE_BR);
-
+	//server.sendContent(page_content);
 	page_content += FPSTR(BR_TAG);
 	page_content += form_checkbox(Config_send2custom2, FPSTR(INTL_SEND_TO_OWN_API2), false);
-
+	page_content += FPSTR(WEB_NBSP_NBSP_BRACE);
+	page_content += form_checkbox(Config_ssl_custom2, FPSTR(WEB_HTTPS), false);
+	page_content += FPSTR(WEB_BRACE_BR);
 	server.sendContent(page_content);
-	page_content = emptyString;
 	page_content = FPSTR(TABLE_TAG_OPEN);
 	add_form_input(page_content, Config_host_custom2, FPSTR(INTL_SERVER2), LEN_HOST_CUSTOM2 - 1);
 	add_form_input(page_content, Config_url_custom2, FPSTR(INTL_PATH2), LEN_URL_CUSTOM2 - 1);
 	add_form_input(page_content, Config_port_custom2, FPSTR(INTL_PORT2), MAX_PORT_DIGITS2);
 	add_form_input(page_content, Config_user_custom2, FPSTR(INTL_USER2), LEN_USER_CUSTOM2 - 1);
 	add_form_input(page_content, Config_pwd_custom2, FPSTR(INTL_PASSWORD2), LEN_CFG_PASSWORD2 - 1);
-
+	page_content += FPSTR(TABLE_TAG_CLOSE_BR);
+	server.sendContent(page_content);
 	page_content = tmpl(FPSTR(WEB_DIV_PANEL), String(7));
 
 	//AJOUTER TEXTE, LIEN etc.
 
 	add_form_checkbox(Config_rgpd, FPSTR(INTL_RGPD_ACCEPT));
 
-	page_content += FPSTR(TABLE_TAG_CLOSE_BR);
+	//page_content += FPSTR(TABLE_TAG_CLOSE_BR);
 	page_content += F("</div></div>");
 	page_content += form_submit(FPSTR(INTL_SAVE_AND_RESTART));
 	page_content += FPSTR(BR_TAG);
@@ -3059,7 +3054,7 @@ static void wifiConfig()
 
 	wificonfig_loop = true;
 
-	WiFi.disconnect(true);
+	WiFi.disconnect(true, true);
 	debug_outln_info(F("scan for wifi networks..."));
 	int8_t scanReturnCode = WiFi.scanNetworks(false /* scan async */, true /* show hidden networks */);
 	if (scanReturnCode < 0)
@@ -3139,7 +3134,7 @@ static void wifiConfig()
 	//On coupe si depassemnt du temps
 
 	WiFi.softAPdisconnect(true);
-	WiFi.disconnect(true);
+	//WiFi.disconnect(true, true);
 
 	debug_outln_info(F("---- Result Webconfig ----"));
 	debug_outln_info(F("WiFi: "), cfg::has_wifi);
@@ -3178,67 +3173,43 @@ static void waitForWifiToConnect(int maxRetries)
 }
 
 /*****************************************************************
- * get GPS from AirCarto                                       *
- *****************************************************************/
-
-String latitude_aircarto = "0.00000";
-String longitude_aircarto = "0.00000";
-
-gps getGPS(String id)
-{
-	String reponseAPI;
-	StaticJsonDocument<JSON_BUFFER_SIZE2> json;
-	char reponseJSON[JSON_BUFFER_SIZE2];
-
-	gps coordinates_wifi{"0.00000", "0.00000"};
-
-	HTTPClient http;
-	http.setTimeout(20 * 1000);
-
-	String urlAirCarto = "http://data.nebuleair.fr/get_loc.php?id=";
-	String serverPath = urlAirCarto + id;
-
-	debug_outln_info(F("Call: "), serverPath);
-	http.begin(serverPath.c_str());
-
-	int httpResponseCode = http.GET();
-
-	if (httpResponseCode > 0)
-	{
-		reponseAPI = http.getString();
-		debug_outln_info(F("Response: "), reponseAPI);
-		strcpy(reponseJSON, reponseAPI.c_str());
-
-		DeserializationError error = deserializeJson(json, reponseJSON);
-
-		if (strcmp(error.c_str(), "Ok") == 0)
-		{
-			return {json["latitude"], json["longitude"]};
-		}
-		else
-		{
-			Debug.print(F("deserializeJson() failed: "));
-			Debug.println(error.c_str());
-			return {"0.00000", "0.00000"};
-		}
-		http.end();
-	}
-	else
-	{
-		debug_outln_info(F("Failed connecting to AirCarto with error code:"), String(httpResponseCode));
-		return {"0.00000", "0.00000"};
-		http.end();
-	}
-}
-
-/*****************************************************************
  * WiFi auto connecting script                                   *
  *****************************************************************/
 
-//static WiFiEventHandler disconnectEventHandler;
+static WiFiEventId_t disconnectEventHandler;
+//static WiFiEventId_t connectEventHandler;
+
 
 static void connectWifi()
 {
+
+	disconnectEventHandler = WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info)
+										  {
+											  if (!wifi_connection_lost)
+											  {
+												  Debug.println("Event disconnect/");
+												  wifi_connection_lost = true;
+											  }
+
+											  last_disconnect_reason = info.wifi_sta_disconnected.reason;
+										  },
+										  WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+
+
+
+		// connectEventHandler = WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info)
+		// 								  {
+		// 									  if (wifi_connection_lost)
+		// 									  {
+		// 										  Debug.println("Event connect");
+		// 										  wifi_connection_lost = false;
+		// 									  }
+
+		// 									  last_connect_reason = info.wifi_sta_connected.reason;
+		// 								  },
+		// 								  WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_CONNECTED);
+
+
 
 	if (WiFi.getAutoConnect())
 	{
@@ -3267,10 +3238,12 @@ static void connectWifi()
 	waitForWifiToConnect(40);
 	debug_outln_info(emptyString);
 
-	if (WiFi.status() != WL_CONNECTED) //Waitforwifistatus ?
+	if (WiFi.waitForConnectResult(10000) != WL_CONNECTED)
 	{
 		wifi_connection_lost = true;
-		cfg::has_wifi = false;
+		// cfg::has_wifi = false;
+		// strcpy_P(cfg::wlanssid, "TYPE SSID");
+		// strcpy_P(cfg::wlanpwd, "TYPE PWD");
 		wifiConfig();
 	}
 	else
@@ -3298,6 +3271,9 @@ static void connectWifi()
 				FastLED.show();
 				drawpicture(check);
 				FastLED.show();
+				delay(3000);
+				drawpicture(empty);
+				FastLED.show();
 			}
 			else
 			{
@@ -3316,18 +3292,6 @@ static void connectWifi()
 		}
 
 		wifi_connection_lost = false;
-		Debug.println("Get coordinates..."); //only once!
-		gps coordinates_wifi = getGPS(esp_chipid);
-		latitude_aircarto = coordinates_wifi.latitude;
-		longitude_aircarto = coordinates_wifi.longitude;
-
-		Debug.println(coordinates_wifi.latitude);
-		Debug.println(coordinates_wifi.longitude);
-		if (coordinates_wifi.latitude != "0.00000" && coordinates_wifi.latitude != "0.00000")
-		{
-			strcpy_P(cfg::latitude, latitude_aircarto.c_str()); //replace the values in the firmware but not in the SPIFFS
-			strcpy_P(cfg::longitude, longitude_aircarto.c_str());
-		}
 	}
 
 	debug_outln_info(F("WiFi connected, IP is: "), WiFi.localIP().toString());
@@ -3342,23 +3306,22 @@ static void connectWifi()
 
 static WiFiClient *getNewLoggerWiFiClient(const LoggerEntry logger)
 {
-
 	WiFiClient *_client;
-	if (loggerConfigs[logger].session)
-	{
-		_client = new WiFiClientSecure;
-	}
-	else
-	{
-		_client = new WiFiClient;
-	}
+	_client = new WiFiClient;
+	return _client;
+}
+
+static WiFiClientSecure *getNewLoggerWiFiClientSecure(const LoggerEntry logger)
+{
+	WiFiClientSecure *_client;
+	_client = new WiFiClientSecure;
 	return _client;
 }
 
 /*****************************************************************
  * send data to rest api                                         *
  *****************************************************************/
-static unsigned long sendData(const LoggerEntry logger, const String &data, const int pin, const char *host, const char *url)
+static unsigned long sendData(const LoggerEntry logger, const String &data, const int pin, const char *host, const char *url, bool ssl)
 {
 
 	unsigned long start_send = millis();
@@ -3368,60 +3331,159 @@ static unsigned long sendData(const LoggerEntry logger, const String &data, cons
 	String s_Host(FPSTR(host));
 	String s_url(FPSTR(url));
 
-	switch (logger)
+switch (logger)
 	{
+	case LoggerSensorCommunity:
+		Debug.print("LoggerSensorCommunity https: ");
+		Debug.println(ssl);
+		contentType = FPSTR(TXT_CONTENT_TYPE_JSON);
+		break;
+	case LoggerMadavi:
+		Debug.print("LoggerMadavi https: ");
+		Debug.println(ssl);
+		contentType = FPSTR(TXT_CONTENT_TYPE_JSON);
+		break;
+	case LoggerCustom:
+		Debug.print("LoggerAirCarto https: ");
+		Debug.println(ssl);
+		contentType = FPSTR(TXT_CONTENT_TYPE_JSON);
+		break;
+	case LoggerCustom2:
+		Debug.print("LoggerAtmoSud https: ");
+		Debug.println(ssl);
+		contentType = FPSTR(TXT_CONTENT_TYPE_JSON);
+		break;
 	default:
 		contentType = FPSTR(TXT_CONTENT_TYPE_JSON);
 		break;
 	}
 
-	std::unique_ptr<WiFiClient> client(getNewLoggerWiFiClient(logger));
-
-	HTTPClient http;
-	http.setTimeout(20 * 1000);
-	http.setUserAgent(SOFTWARE_VERSION + '/' + esp_chipid);
-	http.setReuse(false);
-	bool send_success = false;
-	if (logger == LoggerCustom && (*cfg::user_custom || *cfg::pwd_custom))
+	if (!ssl)
 	{
-		http.setAuthorization(cfg::user_custom, cfg::pwd_custom);
-	}
-	if (http.begin(*client, s_Host, loggerConfigs[logger].destport, s_url, !!loggerConfigs[logger].session))
-	{
-		http.addHeader(F("Content-Type"), contentType);
-		http.addHeader(F("X-Sensor"), String(F(SENSOR_BASENAME)) + esp_chipid);
-		// http.addHeader(F("X-MAC-ID"), String(F(SENSOR_BASENAME)) + esp_mac_id);
-		if (pin)
+		std::unique_ptr<WiFiClient> client(getNewLoggerWiFiClient(logger));
+
+		HTTPClient http;
+		http.setTimeout(20 * 1000);
+		http.setUserAgent(SOFTWARE_VERSION + '/' + esp_chipid);
+		http.setReuse(false);
+		bool send_success = false;
+
+		if (logger == LoggerCustom && (*cfg::user_custom || *cfg::pwd_custom))
 		{
-			http.addHeader(F("X-PIN"), String(pin));
+			http.setAuthorization(cfg::user_custom, cfg::pwd_custom);
 		}
 
-		result = http.POST(data);
+		if (logger == LoggerCustom2 && (*cfg::user_custom2 || *cfg::pwd_custom2))
+		{
+			http.setAuthorization(cfg::user_custom2, cfg::pwd_custom2);
+		}
 
-		if (result >= HTTP_CODE_OK && result <= HTTP_CODE_ALREADY_REPORTED)
+		if (http.begin(*client, s_Host, loggerConfigs[logger].destport, s_url, !!loggerConfigs[logger].session))
 		{
-			debug_outln_info(F("Succeeded - "), s_Host);
-			send_success = true;
+			http.addHeader(F("Content-Type"), contentType);
+			http.addHeader(F("X-Sensor"), String(F(SENSOR_BASENAME)) + esp_chipid);
+			// http.addHeader(F("X-MAC-ID"), String(F(SENSOR_BASENAME)) + esp_mac_id);
+			if (pin)
+			{
+				http.addHeader(F("X-PIN"), String(pin));
+			}
+
+			result = http.POST(data);
+
+			if (result >= HTTP_CODE_OK && result <= HTTP_CODE_ALREADY_REPORTED)
+			{
+				debug_outln_info(F("Succeeded http - "), s_Host);
+				send_success = true;
+			}
+			else if (result >= HTTP_CODE_BAD_REQUEST)
+			{
+				debug_outln_info(F("Request http failed with error: "), String(result));
+				debug_outln_info(F("Details:"), http.getString());
+			}
+			http.end();
 		}
-		else if (result >= HTTP_CODE_BAD_REQUEST)
+		else
 		{
-			debug_outln_info(F("Request failed with error: "), String(result));
-			debug_outln_info(F("Details:"), http.getString());
+			debug_outln_info(F("Failed connecting to "), s_Host);
 		}
-		http.end();
+		if (!send_success && result != 0)
+		{
+			loggerConfigs[logger].errors++;
+			last_sendData_returncode = result;
+		}
+
+		return millis() - start_send;
 	}
 	else
 	{
-		debug_outln_info(F("Failed connecting to "), s_Host);
-	}
+		std::unique_ptr<WiFiClientSecure> clientSecure(getNewLoggerWiFiClientSecure(logger));
 
-	if (!send_success && result != 0)
-	{
-		loggerConfigs[logger].errors++;
-		last_sendData_returncode = result;
-	}
+		switch (logger)
+		{
+		case LoggerSensorCommunity:
+			clientSecure->setCACert(dst_root_ca_x3);
+			break;
+		case LoggerMadavi:
+			clientSecure->setCACert(dst_root_ca_x3);
+			break;
+		case LoggerCustom:
+			clientSecure->setCACert(ca_aircarto);
+			break;
+		case LoggerCustom2:
+			clientSecure->setCACert(ca_atmo);
+			break;
+		}
 
-	return millis() - start_send;
+		HTTPClient https;
+		https.setTimeout(20 * 1000);
+		https.setUserAgent(SOFTWARE_VERSION + '/' + esp_chipid);
+		https.setReuse(false);
+		bool send_success = false;
+		if (logger == LoggerCustom && (*cfg::user_custom || *cfg::pwd_custom))
+		{
+			https.setAuthorization(cfg::user_custom, cfg::pwd_custom);
+		}
+		if (logger == LoggerCustom2 && (*cfg::user_custom2 || *cfg::pwd_custom2))
+		{
+			https.setAuthorization(cfg::user_custom2, cfg::pwd_custom2);
+		}
+
+		if (https.begin(*clientSecure, s_Host, loggerConfigs[logger].destport, s_url, !!loggerConfigs[logger].session))
+		{
+			https.addHeader(F("Content-Type"), contentType);
+			https.addHeader(F("X-Sensor"), String(F(SENSOR_BASENAME)) + esp_chipid);
+			// https.addHeader(F("X-MAC-ID"), String(F(SENSOR_BASENAME)) + esp_mac_id);
+			if (pin)
+			{
+				https.addHeader(F("X-PIN"), String(pin));
+			}
+
+			result = https.POST(data);
+
+			if (result >= HTTP_CODE_OK && result <= HTTP_CODE_ALREADY_REPORTED)
+			{
+				debug_outln_info(F("Succeeded https - "), s_Host);
+				send_success = true;
+			}
+			else if (result >= HTTP_CODE_BAD_REQUEST)
+			{
+				debug_outln_info(F("Request https failed with error: "), String(result));
+				debug_outln_info(F("Details:"), https.getString());
+			}
+			https.end();
+		}
+		else
+		{
+			debug_outln_info(F("Failed connecting to "), s_Host);
+		}
+		if (!send_success && result != 0)
+		{
+			loggerConfigs[logger].errors++;
+			last_sendData_returncode = result;
+		}
+
+		return millis() - start_send;
+	}
 }
 
 /*****************************************************************
@@ -3442,7 +3504,7 @@ static unsigned long sendSensorCommunity(const String &data, const int pin, cons
 		data_sensorcommunity.replace(replace_str, emptyString);
 		data_sensorcommunity += "]}";
 		Debug.println(data_sensorcommunity);
-		sum_send_time = sendData(LoggerSensorCommunity, data_sensorcommunity, pin, HOST_SENSORCOMMUNITY, URL_SENSORCOMMUNITY);
+		sum_send_time = sendData(LoggerSensorCommunity, data_sensorcommunity, pin, HOST_SENSORCOMMUNITY, URL_SENSORCOMMUNITY, cfg::ssl_dusti);
 	}
 
 	return sum_send_time;
@@ -4109,7 +4171,7 @@ static unsigned long sendDataToOptionalApis(const String &data)
 	if (cfg::send2madavi)
 	{
 		debug_outln_info(FPSTR(DBG_TXT_SENDING_TO), F("madavi.de: "));
-		sum_send_time += sendData(LoggerMadavi, data, 0, HOST_MADAVI, URL_MADAVI);
+		sum_send_time += sendData(LoggerMadavi, data, 0, HOST_MADAVI, URL_MADAVI, cfg::ssl_madavi);
 	}
 
 	if (cfg::send2custom)
@@ -4121,7 +4183,7 @@ static unsigned long sendDataToOptionalApis(const String &data)
 		data_4_custom += "\", ";
 		data_4_custom += data_to_send;
 		debug_outln_info(FPSTR(DBG_TXT_SENDING_TO), F("aircarto api: "));
-		sum_send_time += sendData(LoggerCustom, data_4_custom, 0, cfg::host_custom, cfg::url_custom);
+		sum_send_time += sendData(LoggerCustom, data_4_custom, 0, cfg::host_custom, cfg::url_custom, cfg::ssl_custom);
 	}
 
 	if (cfg::send2custom2)
@@ -4133,7 +4195,7 @@ static unsigned long sendDataToOptionalApis(const String &data)
 		data_4_custom += "\", ";
 		data_4_custom += data_to_send;
 		debug_outln_info(FPSTR(DBG_TXT_SENDING_TO), F("atmosud api: "));
-		sum_send_time += sendData(LoggerCustom2, data_4_custom, 0, cfg::host_custom2, cfg::url_custom2);
+		sum_send_time += sendData(LoggerCustom2, data_4_custom, 0, cfg::host_custom2, cfg::url_custom2, cfg::ssl_custom2);
 	}
 
 	if (cfg::send2csv)
@@ -4930,7 +4992,7 @@ void loop()
 
 	//AJOUTER BMX SAUF SI ON GARDE LE MODELE SC
 
-	if (cfg::has_wifi && WiFi.waitForConnectResult() == WL_CONNECTED)
+	if (cfg::has_wifi && WiFi.waitForConnectResult(10000) == WL_CONNECTED)
 	{
 		if (wifi_connection_lost)
 		{
@@ -4940,12 +5002,12 @@ void loop()
 		server.handleClient();
 		yield();
 	}
-	else if (cfg::has_wifi && WiFi.waitForConnectResult() != WL_CONNECTED)
+	else if (cfg::has_wifi && WiFi.waitForConnectResult(10000) != WL_CONNECTED)
 	{
 		if (!wifi_connection_lost)
 		{
 			wifi_connection_lost = true;
-			WiFi.disconnect(true);
+			WiFi.disconnect(false, false);
 			Debug.println("Wifi disconnected");
 		};
 	}
@@ -5019,8 +5081,6 @@ void loop()
 		add_Value2Json(data, F("max_micro"), String(max_micro));
 		add_Value2Json(data, F("interval"), String(cfg::sending_intervall_ms));
 		add_Value2Json(data, F("signal"), String(last_signal_strength));
-		add_Value2Json(data, F("latitude"), String(cfg::latitude));
-		add_Value2Json(data, F("longitude"), String(cfg::longitude));
 		add_Value2Json(data, F("rgpd"), String(cfg::rgpd));
 
 		if ((unsigned)(data.lastIndexOf(',') + 1) == data.length())
@@ -5205,23 +5265,23 @@ void loop()
 			}
 		}
 
-		if ((WiFi.status() != WL_CONNECTED || sending_time > 10000 || wifi_connection_lost) && cfg::has_wifi)
+		if ((WiFi.status() != WL_CONNECTED || sending_time > 30000 || wifi_connection_lost) && cfg::has_wifi)
 		{
-			debug_outln_info(F("Connection lost, reconnecting "));
+			debug_outln_info(F("Connection lost, reconnecting to "), cfg::wlanssid);
 			WiFi_error_count++;
-			// WiFi.disconnect(true);
-			// WiFi.begin(cfg::wlanssid, cfg::wlanpwd); //ATTENTION ICI
-			WiFi.reconnect(); //OU BIEN CA + Wifi.Status au lieu de waitfor ?
+			WiFi.reconnect(); 
 			waitForWifiToConnect(20);
-			if (wifi_connection_lost && WiFi.waitForConnectResult() == WL_CONNECTED)
+			if (wifi_connection_lost && WiFi.waitForConnectResult(10000) == WL_CONNECTED)
 			{
 				Debug.println("Reconnect success");
 				wifi_connection_lost = false;
 			}
 			else
 			{
-				Debug.println("Reconnect failed");
-				WiFi.disconnect(true);
+				Debug.println("Reconnect failed after Wifi.reconnect()");
+
+				sensor_restart();
+				//WiFi.disconnect(false, false);  //ENLEVER LE TRUE
 			}
 
 			debug_outln_info(emptyString);
@@ -5285,7 +5345,6 @@ void loop()
 					}
 					else
 					{
-
 						for (int i = 0; i < 6; i++)
 						{
 							fill_solid(leds, LEDS_NB - 1, colorLED_empty);
@@ -5479,12 +5538,14 @@ void loop()
 				{
 					if (LEDS_MATRIX)
 					{
-						fill_solid(leds, LEDS_NB - 1, colorLED_value);
+						// fill_solid(leds, LEDS_NB - 1, colorLED_value);
+						fill_solid(leds, LEDS_NB, colorLED_value);
 						FastLED.show();
 					}
 					else
 					{
-						fill_solid(leds, LEDS_NB - 1, colorLED_value);
+						// fill_solid(leds, LEDS_NB - 1, colorLED_value);
+						fill_solid(leds, LEDS_NB, colorLED_value);
 						FastLED.show();
 					}
 				}
@@ -5500,13 +5561,13 @@ void loop()
 				{
 					if (LEDS_MATRIX)
 					{
-						leds[LEDS_NB - 1] = colorLED_connect;
-						FastLED.show();
+						// leds[LEDS_NB - 1] = colorLED_connect;
+						// FastLED.show();
 					}
 					else
 					{
-						leds[LEDS_NB - 1] = colorLED_connect;
-						FastLED.show();
+						// leds[LEDS_NB - 1] = colorLED_connect;
+						// FastLED.show();
 					}
 				}
 			}

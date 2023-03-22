@@ -25,7 +25,6 @@ Bool		send2madavi
 Bool		ssl_madavi
 Bool		send2csv
 Bool        has_led_value
-Bool        has_led_connect
 UInt		brightness
 UInt        value_displayed
 Bool        rgpd

@@ -136,7 +136,7 @@ configlorawan[1] = cfg::npm_read;
 configlorawan[2] = cfg::bmx280_read;
 configlorawan[3] = cfg::ccs811_read;
 configlorawan[4] = cfg::has_led_value;
-configlorawan[5] = cfg::has_led_connect;
+configlorawan[5] = false;
 configlorawan[6] = cfg::rgpd;
 configlorawan[7] = cfg::has_wifi;
 ```

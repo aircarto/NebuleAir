@@ -108,7 +108,6 @@ namespace cfg
 
 	// (in)active displays
 	bool has_led_value = HAS_LED_VALUE;
-	bool has_led_connect = HAS_LED_CONNECT;
 	unsigned brightness = BRIGHTNESS;
 	bool rgpd = RGPD;
 	unsigned value_displayed = VALUE_DISPLAYED;
@@ -166,7 +165,7 @@ bool configlorawan[8] = {false, false, false, false, false, false, false, false}
 // configlorawan[2] = cfg::bmx280_read;
 // configlorawan[3] = cfg::ccs811_read;
 // configlorawan[4] = cfg::has_led_value;
-// configlorawan[5] = cfg::has_led_connect;
+// configlorawan[5] = false; // une place libre
 // configlorawan[6] = cfg::rgpd;
 // configlorawan[7] = cfg::has_wifi;
 
@@ -210,7 +209,6 @@ WebServer server(80);
 //LED declarations
 
 CRGB colorLED_value;
-CRGB colorLED_connect;
 
 //For monoLED
 
@@ -1729,55 +1727,6 @@ static void add_radio_input(String &page_content, const ConfigShapeId cfgid, con
 		break;
 	}
 
-	//   if (t_value == "0")
-	//   {
-	//       s = F("<b>{i}</b>"
-	//         "<div>"
-	//         "<input type='radio' id='pm1' name='{n}' value='0' checked>"
-	//         "<label for='pm1'>PM1</label>"
-	//         "</div>"
-	//         "<div>"
-	//         "<input type='radio' id='pm10' name='{n}' value='1'>"
-	//         "<label for='pm10'>PM10</label>"
-	//         "</div>"
-	//         "<div>"
-	//         "<input type='radio' id='pm25' name='{n}' value='2'>"
-	//         "<label for='pm25'>PM2.5</label>"
-	//         "</div>");
-	//     }
-	//     if (t_value == "1")
-	//     {
-	//         s = F("<b>{i}</b>"
-	//         "<div>"
-	//         "<input type='radio' id='pm1' name='{n}' value='0'>"
-	//         "<label for='pm1'>PM1</label>"
-	//         "</div>"
-	//         "<div>"
-	//         "<input type='radio' id='pm10' name='{n}' value='1' checked>"
-	//         "<label for='pm10'>PM10</label>"
-	//         "</div>"
-	//         "<div>"
-	//         "<input type='radio' id='pm25' name='{n}' value='2'>"
-	//         "<label for='pm25'>PM2.5</label>"
-	//         "</div>");
-	//    }
-	//    if (t_value == "2")
-	//    {
-	//      s = F("<b>{i}</b>"
-	//            "<div>"
-	//            "<input type='radio' id='pm1' name='{n}' value='0'>"
-	//            "<label for='pm1'>PM1</label>"
-	//            "</div>"
-	//            "<div>"
-	//            "<input type='radio' id='pm10' name='{n}' value='1'>"
-	//            "<label for='pm10'>PM10</label>"
-	//            "</div>"
-	//            "<div>"
-	//            "<input type='radio' id='pm25' name='{n}' value='2' checked>"
-	//            "<label for='pm25'>PM2.5</label>"
-	//            "</div>");
-	//       }
-
 	s.replace("{i}", info);
 	s.replace("{n}", String(c.cfg_key()));
 	page_content += s;
@@ -1791,18 +1740,12 @@ static String form_checkbox(const ConfigShapeId cfgid, const String &info, const
 		  "<input type='hidden' name='{n}' value='0'/>"
 		  "{i}</label><br/>");
 
-	//   Debug.println(cfgid);
-	//   Debug.println(cfgid);
 	if (*configShape[cfgid].cfg_val.as_bool)
 	{
-		// Debug.println(info);
-		// Debug.println("CHECKED");
 		s.replace("{c}", F(" checked='checked'"));
 	}
 	else
 	{
-		// Debug.println(info);
-		// Debug.println("UNCHECKED");
 		s.replace("{c}", emptyString);
 	};
 	s.replace("{i}", info);
@@ -2100,7 +2043,6 @@ static void webserver_config_send_body_get(String &page_content)
 	page_content += FPSTR(INTL_LED_CONFIG);
 	page_content += FPSTR(WEB_B_BR);
 	add_form_checkbox(Config_has_led_value, FPSTR(INTL_LED_VALUE));
-	add_form_checkbox(Config_has_led_connect, FPSTR(INTL_LED_CONNECT));
 	add_form_input(page_content, Config_brightness, FPSTR(INTL_BRIGHTNESS), 3);
 	page_content += FPSTR("<br/><br/>");
 	add_radio_input(page_content, Config_value_displayed, FPSTR(INTL_VALUE_DISPLAYED));
@@ -2238,7 +2180,7 @@ static void sensor_restart()
 		serialSDS.end();
 	}
 
-	if (cfg::has_led_value || cfg::has_led_connect)
+	if (cfg::has_led_value)
 	{
 		if (LEDS_NB == 1)
 		{
@@ -2274,60 +2216,11 @@ static void webserver_config()
 	if (WiFi.getMode() == WIFI_MODE_STA)
 	{
 		debug_outln_info(F("STA"));
-
-		// if (LEDS_NB == 1)
-		// {
-		// 	for (int i = 0; i < 4; i++)
-		// 	{
-		// 		leds[0] = colorLED_empty;
-		// 		FastLED.show();
-		// 		delay(250);
-		// 		leds[0] = colorLED_wifi;
-		// 		FastLED.show();
-		// 		delay(250);
-		// 	}
-		// 	leds[0] = colorLED_empty;
-		// 	FastLED.show();
-		// }
-		// else
-		// {
-		// 	if (LEDS_MATRIX)
-		// 	{
-		// 		drawpicture(empty);
-		// 		FastLED.show();
-		// 		drawpicture(check);
-		// 		FastLED.show();
-		// 	}
-		// 	else
-		// 	{
-		// 	}
-		// }
 	}
 
 	if (WiFi.getMode() == WIFI_MODE_AP)
 	{
 		debug_outln_info(F("AP"));
-
-		// if (LEDS_NB == 1)
-		// {
-		// 	leds[0] = colorLED_empty;
-		// 	FastLED.show();
-		// 	leds[0] = colorLED_wifi;
-		// 	FastLED.show();
-		// }
-		// else
-		// {
-		// 	if (LEDS_MATRIX)
-		// 	{
-		// 		drawpicture(empty);
-		// 		FastLED.show();
-		// 		drawpicture(wifi);
-		// 		FastLED.show();
-		// 	}
-		// 	else
-		// 	{
-		// 	}
-		// }
 	}
 
 	if (!webserver_request_auth())
@@ -2921,7 +2814,6 @@ static void webserver_favicon()
  *****************************************************************/
 static void webserver_not_found()
 {
-
 	last_page_load = millis();
 	debug_outln_info(F("ws: not found ..."));
 
@@ -3021,8 +2913,7 @@ static int selectChannelForAp()
 
 static void wifiConfig()
 {
-
-	if (cfg::has_led_value || cfg::has_led_connect)
+	if (cfg::has_led_value)
 	{
 		if (LEDS_NB == 1)
 		{
@@ -3053,8 +2944,8 @@ static void wifiConfig()
 	debug_outln_info(F("Password: "), String(cfg::fs_pwd));
 
 	wificonfig_loop = true;
-
 	WiFi.disconnect(true, true);
+	
 	debug_outln_info(F("scan for wifi networks..."));
 	int8_t scanReturnCode = WiFi.scanNetworks(false /* scan async */, true /* show hidden networks */);
 	if (scanReturnCode < 0)
@@ -3104,6 +2995,7 @@ static void wifiConfig()
 
 	// X minutes timeout for wifi config
 	last_page_load = millis();
+
 	while ((millis() - last_page_load) < cfg::time_for_wifi_config + 500)
 	{
 		dnsServer.processNextRequest();
@@ -3111,7 +3003,7 @@ static void wifiConfig()
 		yield();
 	}
 
-	if (cfg::has_led_value || cfg::has_led_connect)
+	if (cfg::has_led_value)
 	{
 		if (LEDS_NB == 1)
 		{
@@ -3131,10 +3023,11 @@ static void wifiConfig()
 		}
 	}
 
-	//On coupe si depassemnt du temps
-
 	WiFi.softAPdisconnect(true);
-	//WiFi.disconnect(true, true);
+	dnsServer.stop();  // A VOIR
+	delay(100);
+	// WiFi.disconnect(true, true);
+	WiFi.mode(WIFI_OFF);  //A tenter
 
 	debug_outln_info(F("---- Result Webconfig ----"));
 	debug_outln_info(F("WiFi: "), cfg::has_wifi);
@@ -3156,7 +3049,6 @@ static void wifiConfig()
 	debug_outln_info_bool(F("AtmoSud: "), cfg::send2custom2);
 	debug_outln_info(FPSTR(DBG_TXT_SEP));
 	debug_outln_info_bool(F("LED value: "), cfg::has_led_value);
-	debug_outln_info_bool(F("LED connection: "), cfg::has_led_connect);
 	debug_outln_info(F("Debug: "), String(cfg::debug));
 	wificonfig_loop = false; // VOIR ICI
 }
@@ -3177,48 +3069,53 @@ static void waitForWifiToConnect(int maxRetries)
  *****************************************************************/
 
 static WiFiEventId_t disconnectEventHandler;
-//static WiFiEventId_t connectEventHandler;
-
+static WiFiEventId_t connectEventHandler;
+static WiFiEventId_t STAstartEventHandler;
+static WiFiEventId_t STAstopEventHandler;
 
 static void connectWifi()
 {
 
 	disconnectEventHandler = WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info)
 										  {
-											  if (!wifi_connection_lost)
-											  {
-												  Debug.println("Event disconnect/");
-												  wifi_connection_lost = true;
+											  if (!wifi_connection_lost){
+												Debug.println("Event disconnect");
+											  wifi_connection_lost = true;
 											  }
-
-											  last_disconnect_reason = info.wifi_sta_disconnected.reason;
 										  },
 										  WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
 
 
+	connectEventHandler = WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info)
+										  {
+											if (wifi_connection_lost){
+												Debug.println("Event connect");
+											 wifi_connection_lost = false;
+											}
+										  },
+										  WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_CONNECTED);
 
-		// connectEventHandler = WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info)
-		// 								  {
-		// 									  if (wifi_connection_lost)
-		// 									  {
-		// 										  Debug.println("Event connect");
-		// 										  wifi_connection_lost = false;
-		// 									  }
+	
+	STAstartEventHandler = WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info)
+										  {
+											Debug.println("STA start");
+										  },
+										  WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_START);
 
-		// 									  last_connect_reason = info.wifi_sta_connected.reason;
-		// 								  },
-		// 								  WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_CONNECTED);
-
+	
+	STAstopEventHandler = WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info)
+										  {
+											Debug.println("STA stop");
+										  },
+										  WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_STOP);
 
 
 	if (WiFi.getAutoConnect())
 	{
 		WiFi.setAutoConnect(false);
 	}
-	if (!WiFi.getAutoReconnect())
-	{
-		WiFi.setAutoReconnect(true);
-	}
+
+	WiFi.setAutoReconnect(false);
 
 	// Use 13 channels for connect to known AP
 	wifi_country_t wifi;
@@ -3241,7 +3138,7 @@ static void connectWifi()
 	if (WiFi.waitForConnectResult(10000) != WL_CONNECTED)
 	{
 		wifi_connection_lost = true;
-		// cfg::has_wifi = false;
+		cfg::has_wifi = false;
 		// strcpy_P(cfg::wlanssid, "TYPE SSID");
 		// strcpy_P(cfg::wlanpwd, "TYPE PWD");
 		wifiConfig();
@@ -3303,6 +3200,90 @@ static void connectWifi()
 		MDNS.addServiceTxt("http", "tcp", "PATH", "/config");
 	}
 }
+
+
+
+// static void reConnectWifi()
+// {
+// 	display_debug(F("Connecting to"), String(cfg::wlanssid));
+
+// 	disconnectEventHandler = WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info)
+// 										  {
+// 											  if (!wifi_connection_lost){
+// 												Debug.println("Event disconnect");
+// 											  wifi_connection_lost = true;
+// 											  }
+// 										  },
+// 										  WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+
+// 	connectEventHandler = WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info)
+// 										  {
+// 											if (wifi_connection_lost){
+// 												Debug.println("Event connect");
+// 											 wifi_connection_lost = false;
+// 											}
+// 										  },
+// 										  WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_CONNECTED);
+
+// 	STAstartEventHandler = WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info)
+// 										  {
+// 											Debug.println("STA start");
+// 										  },
+// 										  WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_START);
+
+// 	STAstopEventHandler = WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info)
+// 										  {
+// 											Debug.println("STA stop");
+// 										  },
+// 										  WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_STOP);
+
+// 	if (WiFi.getAutoConnect())
+// 	{
+// 		WiFi.setAutoConnect(false);
+// 	}
+
+// 	WiFi.setAutoReconnect(false);
+
+// 	// Use 13 channels for connect to known AP
+// 	wifi_country_t wifi;
+// 	wifi.policy = WIFI_COUNTRY_POLICY_MANUAL;
+// 	strcpy(wifi.cc, INTL_LANG);
+// 	wifi.nchan = 13;
+// 	wifi.schan = 1;
+
+// 	WiFi.mode(WIFI_STA);
+// 	WiFi.setHostname(cfg::fs_ssid);
+// 	WiFi.begin(cfg::wlanssid, cfg::wlanpwd); // Start WiFI
+
+// 	debug_outln_info(FPSTR(DBG_TXT_CONNECTING_TO), cfg::wlanssid);
+
+// 	waitForWifiToConnect(40);
+// 	debug_outln_info(emptyString);
+
+// 	if (WiFi.waitForConnectResult(10000) != WL_CONNECTED)
+// 	{
+// 		Debug.println("Can't restart!");
+// 		// sensor_restart();
+// 		wifi_connection_lost = true;
+// 	}
+// 	else
+// 	{
+// 		wifi_connection_lost = false;
+// 	}
+
+// 	debug_outln_info(F("WiFi connected, IP is: "), WiFi.localIP().toString());
+// 	last_signal_strength = WiFi.RSSI();
+
+// 	if (MDNS.begin(cfg::fs_ssid))
+// 	{
+// 		MDNS.addService("http", "tcp", 80);
+// 		MDNS.addServiceTxt("http", "tcp", "PATH", "/config");
+// 	}
+// }
+
+
+
+
 
 static WiFiClient *getNewLoggerWiFiClient(const LoggerEntry logger)
 {
@@ -3754,7 +3735,6 @@ static void fetchSensorSDS(String &s)
  *****************************************************************/
 static void fetchSensorNPM(String &s)
 {
-
 	NPM_waiting_for_16 = NPM_REPLY_HEADER_16;
 
 	debug_outln_info(F("Concentration NPM..."));
@@ -3971,7 +3951,7 @@ static void powerOnTestSensors()
 
 		//AJOUTER TEST SI PAS LED
 
-		if (cfg::has_led_value || cfg::has_led_connect)
+		if (cfg::has_led_value)
 		{
 			if (LEDS_NB == 1)
 			{
@@ -4073,7 +4053,7 @@ static void powerOnTestSensors()
 
 			//AJOUTER TEST SI PAS LED
 
-			if (cfg::has_led_value || cfg::has_led_connect)
+			if (cfg::has_led_value)
 			{
 				if (LEDS_NB == 1)
 				{
@@ -4598,8 +4578,6 @@ static void prepareTxFrame()
 	datalora[19] = u1.temp_byte[1];
 	datalora[20] = u1.temp_byte[0];
 
-	//datalora[23] = (int8_t)round(last_value_BMX280_T);
-
 	datalora[21] = (int8_t)round(last_value_BME280_H);
 
 	u1.temp_int = (int16_t)round(last_value_BMX280_P);
@@ -4686,7 +4664,7 @@ void setup()
 		serialSDS.setTimeout((4 * 12 * 1000) / 9600);
 	}
 
-	if (cfg::has_led_value || cfg::has_led_connect)
+	if (cfg::has_led_value)
 	{
 		debug_outln_info(F("init FastLED"));
 		FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, LEDS_NB); //swap R and G !  //ATTENTION AU TYPE DE LED
@@ -4844,7 +4822,7 @@ void setup()
 	configlorawan[2] = cfg::bmx280_read;
 	configlorawan[3] = cfg::ccs811_read;
 	configlorawan[4] = cfg::has_led_value;
-	configlorawan[5] = cfg::has_led_connect;
+	configlorawan[5] = false; //une place libre
 	configlorawan[6] = cfg::rgpd;
 	configlorawan[7] = cfg::has_wifi;
 	//si connection manquée => false
@@ -4868,8 +4846,6 @@ void loop()
 	send_now = msSince(starttime) > cfg::sending_intervall_ms;
 
 	//first run
-
-	
 
 	if (count_sends == 0 && !send_now)
 	{
@@ -4992,24 +4968,12 @@ void loop()
 
 	//AJOUTER BMX SAUF SI ON GARDE LE MODELE SC
 
-	if (cfg::has_wifi && WiFi.waitForConnectResult(10000) == WL_CONNECTED)
+	//if (cfg::has_wifi && WiFi.waitForConnectResult(10000) == WL_CONNECTED)
+	//if (cfg::has_wifi && !wifi_connection_lost)
+	if (cfg::has_wifi && WiFi.status() == WL_CONNECTED)
 	{
-		if (wifi_connection_lost)
-		{
-			Debug.println("Wifi reconnected");
-			wifi_connection_lost = false;
-		};
 		server.handleClient();
 		yield();
-	}
-	else if (cfg::has_wifi && WiFi.waitForConnectResult(10000) != WL_CONNECTED)
-	{
-		if (!wifi_connection_lost)
-		{
-			wifi_connection_lost = true;
-			WiFi.disconnect(false, false);
-			Debug.println("Wifi disconnected");
-		};
 	}
 
 	if (send_now && cfg::sending_intervall_ms >= 120000)
@@ -5023,13 +4987,9 @@ void loop()
 			last_signal_strength = WiFi.RSSI();
 		}
 		RESERVE_STRING(data, LARGE_STR);
-		//RESERVE_STRING(data_custom, LARGE_STR);
 		data = FPSTR(data_first_part);
 		//data_custom
 		RESERVE_STRING(result, MED_STR);
-
-		//void *SpActual = NULL;
-		//Debug.printf("Free Stack at sendSensorCommunity is: %d \r\n", (uint32_t)&SpActual - (uint32_t)StackPtrEnd);
 
 		if (cfg::sds_read)
 		{
@@ -5185,46 +5145,12 @@ void loop()
 			{
 				if (LEDS_MATRIX)
 				{
-					fill_solid(leds, LEDS_NB - 1, colorLED_value);
+					fill_solid(leds, LEDS_NB, colorLED_value);
 					FastLED.show();
 				}
 				else
 				{
-					fill_solid(leds, LEDS_NB - 1, colorLED_value);
-					FastLED.show();
-				}
-			}
-		}
-
-		if (cfg::has_led_connect)
-		{
-			if ((!cfg::has_wifi && !cfg::has_lora) || (cfg::has_wifi && wifi_connection_lost && !cfg::has_lora) || (cfg::has_lora && lora_connection_lost && !cfg::has_wifi))
-			{
-				colorLED_connect = colorLED_empty;
-			}
-			if (cfg::has_wifi && !wifi_connection_lost)
-			{
-				colorLED_connect = colorLED_wifi;
-			}
-			if (cfg::has_lora && (!cfg::has_wifi || (cfg::has_wifi && wifi_connection_lost)) && !lora_connection_lost)
-			{
-				colorLED_connect = colorLED_lora;
-			} //wifi prioritaire
-
-			if (LEDS_NB == 1)
-			{
-				//On ne fait rien
-			}
-			else
-			{
-				if (LEDS_MATRIX)
-				{
-					leds[LEDS_NB - 1] = colorLED_connect;
-					FastLED.show();
-				}
-				else
-				{
-					leds[LEDS_NB - 1] = colorLED_connect;
+					fill_solid(leds, LEDS_NB, colorLED_value);
 					FastLED.show();
 				}
 			}
@@ -5267,23 +5193,32 @@ void loop()
 
 		if ((WiFi.status() != WL_CONNECTED || sending_time > 30000 || wifi_connection_lost) && cfg::has_wifi)
 		{
-			debug_outln_info(F("Connection lost, reconnecting to "), cfg::wlanssid);
+			debug_outln_info(F("Connection lost, reconnecting "));
 			WiFi_error_count++;
-			WiFi.reconnect(); 
+			WiFi.reconnect();
 			waitForWifiToConnect(20);
-			if (wifi_connection_lost && WiFi.waitForConnectResult(10000) == WL_CONNECTED)
-			{
-				Debug.println("Reconnect success");
-				wifi_connection_lost = false;
-			}
-			else
-			{
-				Debug.println("Reconnect failed after Wifi.reconnect()");
 
-				sensor_restart();
-				//WiFi.disconnect(false, false);  //ENLEVER LE TRUE
-			}
+			if (wifi_connection_lost && WiFi.waitForConnectResult(10000) != WL_CONNECTED)
+			{
+				Debug.println("Reconnect failed after WiFi.reconnect()");
+				WiFi.disconnect(true, true);
+				// wifi_country_t wifi;
+				// wifi.policy = WIFI_COUNTRY_POLICY_MANUAL;
+				// strcpy(wifi.cc, INTL_LANG);
+				// wifi.nchan = 13;
+				// wifi.schan = 1;
+				WiFi.mode(WIFI_STA);
+				WiFi.setHostname(cfg::fs_ssid);
+				WiFi.begin(cfg::wlanssid, cfg::wlanpwd); // Start WiFI again
 
+				// if (MDNS.begin(cfg::fs_ssid))
+				// {
+				// 	MDNS.addService("http", "tcp", 80);
+				// 	MDNS.addServiceTxt("http", "tcp", "PATH", "/config");
+				// }
+
+				//reConnectWifi();
+			}
 			debug_outln_info(emptyString);
 		}
 
@@ -5309,7 +5244,7 @@ void loop()
 			//os_run_loop_once here ?
 		}
 
-		if (cfg::has_led_value || cfg::has_led_connect)
+		if (cfg::has_led_value)
 		{
 			if ((cfg::has_wifi && wifi_connection_lost && !cfg::has_lora) || (cfg::has_lora && lora_connection_lost && !cfg::has_wifi))
 			{
@@ -5347,14 +5282,14 @@ void loop()
 					{
 						for (int i = 0; i < 6; i++)
 						{
-							fill_solid(leds, LEDS_NB - 1, colorLED_empty);
+							fill_solid(leds, LEDS_NB, colorLED_empty);
 							FastLED.show();
 							delay(250);
-							fill_solid(leds, LEDS_NB - 1, colorLED_red);
+							fill_solid(leds, LEDS_NB, colorLED_red);
 							FastLED.show();
 							delay(250);
 						}
-						fill_solid(leds, LEDS_NB - 1, colorLED_empty);
+						fill_solid(leds, LEDS_NB, colorLED_empty);
 						FastLED.show();
 					}
 				}
@@ -5538,36 +5473,13 @@ void loop()
 				{
 					if (LEDS_MATRIX)
 					{
-						// fill_solid(leds, LEDS_NB - 1, colorLED_value);
 						fill_solid(leds, LEDS_NB, colorLED_value);
 						FastLED.show();
 					}
 					else
 					{
-						// fill_solid(leds, LEDS_NB - 1, colorLED_value);
 						fill_solid(leds, LEDS_NB, colorLED_value);
 						FastLED.show();
-					}
-				}
-			}
-
-			if (cfg::has_led_connect)
-			{
-				if (LEDS_NB == 1)
-				{
-					//On fait rien
-				}
-				else
-				{
-					if (LEDS_MATRIX)
-					{
-						// leds[LEDS_NB - 1] = colorLED_connect;
-						// FastLED.show();
-					}
-					else
-					{
-						// leds[LEDS_NB - 1] = colorLED_connect;
-						// FastLED.show();
 					}
 				}
 			}

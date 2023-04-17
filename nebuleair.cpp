@@ -4036,11 +4036,7 @@ static void fetchSensorNPM(String &s)
 		npm_pm1_sum = 0;
 		npm_pm10_sum = 0;
 		npm_pm25_sum = 0;
-
 		npm_val_count = 0;
-		Debug.print("npm_val_count: ");
-		Debug.println(npm_val_count);
-
 		npm_pm1_sum_pcs = 0;
 		npm_pm10_sum_pcs = 0;
 		npm_pm25_sum_pcs = 0;
@@ -5402,9 +5398,6 @@ void loop()
 		min_micro = 1000000000;
 		max_micro = 0;
 		sum_send_time = 0;
-
-		prepareTxFrame();
-
 
 		if (cfg::has_lora && lorachip)
 		{

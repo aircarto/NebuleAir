@@ -217,7 +217,7 @@ CRGB colorLED_wifi = CRGB(0, 0, 255);
 CRGB colorLED_lora = CRGB(255, 255, 0);
 CRGB colorLED_start = CRGB(255, 255, 255);
 CRGB colorLED_red = CRGB(255, 0, 0);
-CRGB colorLED_orange = CRGB(255, 165, 0);
+CRGB colorLED_orange = CRGB(255, 128, 0);
 CRGB colorLED_yellow = CRGB(255, 255, 0);
 CRGB colorLED_green = CRGB(0, 255, 0);
 
@@ -236,6 +236,11 @@ struct RGB displayColor_value
 };
 
 struct RGB displayColor_connect
+{
+	0, 0, 0
+};
+
+struct RGB displayColor_WiFi
 {
 	0, 0, 0
 };
@@ -357,6 +362,77 @@ struct RGB interpolateindice(int valueIndice, bool correction)
 		result.G = 0;
 		result.B = 0;
 	}
+
+	if (correction == true)
+	{
+		result.R = pgm_read_byte(&gamma8[result.R]);
+		result.G = pgm_read_byte(&gamma8[result.G]);
+		result.B = pgm_read_byte(&gamma8[result.B]);
+	}
+
+	rgb565 = ((result.R & 0b11111000) << 8) | ((result.G & 0b11111100) << 3) | (result.B >> 3);
+	//Debug.println(rgb565); // to get list of color if drawGradient is acitvated
+	return result;
+}
+
+struct RGB colorPM(int valueSensor, int step1, int step2, int step3, int step4, int step5, bool correction)
+{
+	struct RGB result;
+	uint16_t rgb565;
+
+	if (valueSensor == 0)
+	{
+		result.R = 80;
+		result.G = 240; //blue
+		result.B = 230;
+	}
+	else if (valueSensor > 0 && valueSensor <= step5)
+	{
+		if (valueSensor <= step1)
+		{
+		result.R = 80;
+		result.G = 240; //blue
+		result.B = 230;
+		}
+		else if (valueSensor > step1 && valueSensor <= step2)
+		{
+		result.R = 80;
+		result.G = 204; //green
+		result.B = 170;
+		}
+		else if (valueSensor > step2 && valueSensor <= step3)
+		{
+		result.R = 237;
+		result.G = 230; //yellow
+		result.B = 97;
+		}
+		else if (valueSensor > step3 && valueSensor <= step4)
+		{
+		result.R = 237;
+		result.G = 94; //orange
+		result.B = 88;
+		}
+		else if (valueSensor > step4 && valueSensor <= step5)
+		{
+		result.R = 136;
+		result.G = 26; //red
+		result.B = 51;
+		}
+	}
+	else if (valueSensor > step5)
+	{
+		result.R = 115;
+		result.G = 40; //violet
+		result.B = 125;
+	}
+	else
+	{
+		result.R = 0;
+		result.G = 0;
+		result.B = 0;
+	}
+
+	//Gamma Correction
 
 	if (correction == true)
 	{
@@ -674,6 +750,103 @@ struct RGB interpolateTemp(float valueSensor, int step1, int step2, bool correct
 	//Debug.println(rgb565); // to get list of color if drawGradient is acitvated
 	return result;
 }
+
+struct RGB interpolateWiFi(int32_t valueSignal, int step1, int step2)
+{
+
+	byte endColorValueR;
+	byte startColorValueR;
+	byte endColorValueG;
+	byte startColorValueG;
+	byte endColorValueB;
+	byte startColorValueB;
+
+	int valueLimitHigh;
+	int valueLimitLow;
+	struct RGB result;
+	uint16_t rgb565;
+
+	if (valueSignal == 0)
+	{
+
+		result.R = 255;
+		result.G = 0; //red
+		result.B = 0;
+	}
+	else if (valueSignal > 0 && valueSignal < 100)
+	{
+		if (valueSignal <= step1)
+		{
+			valueLimitHigh = step1;
+			valueLimitLow = 0;
+			endColorValueR = 255;
+			startColorValueR = 255; //red to orange
+			endColorValueG = 128;
+			startColorValueG = 0;
+			endColorValueB = 0;
+			startColorValueB = 0;
+		}
+		else if (valueSignal > step1 && valueSignal <= step2)
+		{
+			valueLimitHigh = step2;
+			valueLimitLow = step1;
+			endColorValueR = 255;
+			startColorValueR = 255;
+			endColorValueG = 255; //orange to yellow
+			startColorValueG = 128;
+			endColorValueB = 0;
+			startColorValueB = 0;
+		}
+		else if (valueSignal > step2 )
+		{
+			valueLimitHigh = 100;
+			valueLimitLow = step2;
+			endColorValueR = 0;
+			startColorValueR = 255;
+			endColorValueG = 255; // yellow to green
+			startColorValueG = 255;
+			endColorValueB = 0;
+			startColorValueB = 0;
+		}
+
+		result.R = (byte)(((endColorValueR - startColorValueR) * ((valueSignal - valueLimitLow) / (valueLimitHigh - valueLimitLow))) + startColorValueR);
+		result.G = (byte)(((endColorValueG - startColorValueG) * ((valueSignal - valueLimitLow) / (valueLimitHigh - valueLimitLow))) + startColorValueG);
+		result.B = (byte)(((endColorValueB - startColorValueB) * ((valueSignal - valueLimitLow) / (valueLimitHigh - valueLimitLow))) + startColorValueB);
+	}
+	else if (valueSignal >= 100)
+	{
+		result.R = 0;
+		result.G = 255; //violet
+		result.B = 0;
+	}
+	else
+	{
+		result.R = 0;
+		result.G = 0;
+		result.B = 0;
+	}
+
+	return result;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 static void drawpicture(uint8_t img[][3])
 {
@@ -3815,6 +3988,7 @@ static void fetchSensorNPM(String &s)
 				npm_pm25_sum_pcs += N25_serial;
 				npm_pm10_sum_pcs += N10_serial;
 				npm_val_count++;
+				
 				debug_outln(String(npm_val_count), DEBUG_MAX_INFO);
 			}
 			NPM_waiting_for_16 = NPM_REPLY_HEADER_16;
@@ -3836,6 +4010,9 @@ static void fetchSensorNPM(String &s)
 			last_value_NPM_P0 = float(npm_pm1_sum) / (npm_val_count * 10.0f);
 			last_value_NPM_P1 = float(npm_pm10_sum) / (npm_val_count * 10.0f);
 			last_value_NPM_P2 = float(npm_pm25_sum) / (npm_val_count * 10.0f);
+
+			Debug.print("last_value_NPM_P2: ");
+			Debug.println(last_value_NPM_P2);
 
 			last_value_NPM_N1 = float(npm_pm1_sum_pcs) / (npm_val_count); //enlevé * 1000.0f pour Litre
 			last_value_NPM_N10 = float(npm_pm10_sum_pcs) / (npm_val_count);
@@ -3861,6 +4038,8 @@ static void fetchSensorNPM(String &s)
 		npm_pm25_sum = 0;
 
 		npm_val_count = 0;
+		Debug.print("npm_val_count: ");
+		Debug.println(npm_val_count);
 
 		npm_pm1_sum_pcs = 0;
 		npm_pm10_sum_pcs = 0;
@@ -4226,22 +4405,12 @@ const unsigned TX_INTERVAL = (cfg::sending_intervall_ms) / 1000;
 
 static osjob_t sendjob;
 
-#if defined(ARDUINO_ESP32_DEV) and defined(KIT_C)
 const lmic_pinmap lmic_pins = {
 	.nss = D5,
 	.rxtx = LMIC_UNUSED_PIN,
 	.rst = D0,
 	.dio = {D26, D35, D34},
 };
-#endif
-
-#if defined(ARDUINO_ESP32_DEV) and defined(KIT_V1)
-const lmic_pinmap lmic_pins = {
-	.nss = D5,
-	.rxtx = LMIC_UNUSED_PIN,
-	.rst = D0,
-	.dio = {D26, D35, D34}};
-#endif
 
 void ToByteArray()
 {
@@ -4643,12 +4812,11 @@ void setup()
 
 	init_config();
 
-#if defined(ESP32) and not defined(ARDUINO_HELTEC_WIFI_LORA_32_V2) and not defined(ARDUINO_TTGO_LoRa32_v21new)
 	Wire.begin(I2C_PIN_SDA, I2C_PIN_SCL);
 	lorachip = loratest(D26); // test if the LoRa module is connected when LoRaWAN option checked, otherwise freeze...
 	Debug.print("Lora chip connected:");
 	Debug.println(lorachip);
-#endif
+
 
 	if (cfg::npm_read)
 	{
@@ -5051,13 +5219,12 @@ void loop()
 
 		if (cfg::has_led_value)
 		{
-
 			switch (cfg::value_displayed)
 			{
 			case 0:
 				if (cfg::npm_read && last_value_NPM_P0 != -1.0)
 				{
-					displayColor_value = interpolatePM(last_value_NPM_P0, 10, 20, 25, 50, 75, gamma_correction);
+					displayColor_value = colorPM((int)round(last_value_NPM_P0), 10, 20, 25, 50, 75, gamma_correction);
 				}
 				else
 				{
@@ -5067,11 +5234,11 @@ void loop()
 			case 1:
 				if (cfg::npm_read && last_value_NPM_P1 != -1.0)
 				{
-					displayColor_value = interpolatePM(last_value_NPM_P1, 20, 40, 50, 100, 150, gamma_correction);
+					displayColor_value = colorPM((int)round(last_value_NPM_P1), 20, 40, 50, 100, 150, gamma_correction);
 				}
 				else if (cfg::sds_read && last_value_SDS_P1 != -1.0)
 				{
-					displayColor_value = interpolatePM(last_value_SDS_P1, 20, 40, 50, 100, 150, gamma_correction);
+					displayColor_value = colorPM((int)round(last_value_SDS_P1), 20, 40, 50, 100, 150, gamma_correction);
 				}
 				else
 				{
@@ -5081,11 +5248,11 @@ void loop()
 			case 2:
 				if (cfg::npm_read && last_value_NPM_P2 != -1.0)
 				{
-					displayColor_value = interpolatePM(last_value_NPM_P2, 10, 20, 25, 50, 75, gamma_correction);
+					displayColor_value = colorPM((int)round(last_value_NPM_P2), 10, 20, 25, 50, 75, gamma_correction);
 				}
 				else if (cfg::sds_read && last_value_SDS_P2 != -1.0)
 				{
-					displayColor_value = interpolatePM(last_value_SDS_P2, 10, 20, 25, 50, 75, gamma_correction);
+					displayColor_value = colorPM((int)round(last_value_SDS_P2), 10, 20, 25, 50, 75, gamma_correction);
 				}
 				else
 				{
@@ -5236,6 +5403,9 @@ void loop()
 		max_micro = 0;
 		sum_send_time = 0;
 
+		prepareTxFrame();
+
+
 		if (cfg::has_lora && lorachip)
 		{
 			prepareTxFrame();
@@ -5297,6 +5467,11 @@ void loop()
 
 			if (cfg::has_wifi && !wifi_connection_lost)
 			{
+				int32_t signal_diplay = calcWiFiSignalQuality(last_signal_strength);
+
+				displayColor_WiFi = interpolateWiFi(signal_diplay,33,66);
+
+				colorLED_wifi = CRGB(displayColor_WiFi.R, displayColor_WiFi.G, displayColor_WiFi.B);
 
 				if (LEDS_NB == 1)
 				{
@@ -5317,46 +5492,50 @@ void loop()
 				{
 					if (LEDS_MATRIX)
 					{
-						drawpicture(transmitblue1);
+						Rwifi = displayColor_WiFi.R;
+						Gwifi = displayColor_WiFi.G;
+						Bwifi = displayColor_WiFi.B;
+
+						drawpicture(transmitwifi1);
 						FastLED.show();
 						delay(250);
-						drawpicture(transmitblue2);
+						drawpicture(transmitwifi2);
 						FastLED.show();
 						delay(250);
-						drawpicture(transmitblue3);
+						drawpicture(transmitwifi3);
 						FastLED.show();
 						delay(250);
-						drawpicture(transmitblue4);
+						drawpicture(transmitwifi4);
 						FastLED.show();
 						delay(250);
-						drawpicture(transmitblue5);
+						drawpicture(transmitwifi5);
 						FastLED.show();
 						delay(250);
-						drawpicture(transmitblue6);
+						drawpicture(transmitwifi6);
 						FastLED.show();
 						delay(250);
-						drawpicture(transmitblue7);
+						drawpicture(transmitwifi7);
 						FastLED.show();
 						delay(250);
-						drawpicture(transmitblue8);
+						drawpicture(transmitwifi8);
 						FastLED.show();
 						delay(250);
-						drawpicture(transmitblue9);
+						drawpicture(transmitwifi9);
 						FastLED.show();
 						delay(250);
-						drawpicture(transmitblue10);
+						drawpicture(transmitwifi10);
 						FastLED.show();
 						delay(250);
-						drawpicture(transmitblue11);
+						drawpicture(transmitwifi11);
 						FastLED.show();
 						delay(250);
-						drawpicture(transmitblue12);
+						drawpicture(transmitwifi12);
 						FastLED.show();
 						delay(250);
-						drawpicture(transmitblue13);
+						drawpicture(transmitwifi13);
 						FastLED.show();
 						delay(250);
-						drawpicture(transmitblue14);
+						drawpicture(transmitwifi14);
 						FastLED.show();
 						delay(250);
 						drawpicture(empty);
